@@ -1,0 +1,34 @@
+{
+  "collectionName": "components_feed_cotent_contents",
+  "info": {
+    "name": "content",
+    "icon": "align-left"
+  },
+  "options": {},
+  "attributes": {
+    "version": {
+      "type": "string"
+    },
+    "userName": {
+      "type": "string"
+    },
+    "activityName": {
+      "type": "string"
+    },
+    "groupName": {
+      "type": "string"
+    },
+    "notionTitle": {
+      "type": "string"
+    },
+    "proposalTitle": {
+      "type": "string"
+    },
+    "questionTitle": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    }
+  }
+}

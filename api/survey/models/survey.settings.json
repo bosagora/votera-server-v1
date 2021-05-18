@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "surveys",
+  "info": {
+    "name": "survey",
+    "description": "액티비티를 구성하는 내용 중 설문조사 양식에 대한 내용만 따로 저장. 실제 액티비티로 만들어지는 설문조사 양식 뿐만 아니라 여러 설문조사에 공통으로 사용할 수 있게 만든 템플릿도 저장 가능.\n\n## Mutation 작성 방법:\nmutation {\n  createSurvey (input:\n    {\n      data: {\n        title: \"서비스 만족도 조사\",\n        description: \"디포라 서비스에 대한 사용자 여러분의 만족도에 대한 설문조사입니다. 귀하의 소중한 의견을 반영하여 더욱 향상된 서비스 제공하고자 하오니 적극적인 참여 부탁드립니다.\",\n        isTemplate: true,\n        option: {\n          __typename: \"ComponentActivityTemplateOption\",\n          scope: SYSTEM,\n          availableIn: \"\"\n        },\n        questions: []\n        activity: null,\n        template: null,\n        workspace: 1\n      }\n    }\n  )\n  {\n    survey {\n      ...surveyFields\n    }\n  }\n}\n\n#참고: 위에서 사용한 surveyFields fragment는 아래와 같다.\nfragment surveyFields on Survey {\n  id\n  title\n  description\n  option {\n    ... on ComponentActivitySurveyOption {\n      resubmit\n    }\n    ... on ComponentActivityTemplateOption {\n      scope\n      availableIn\n    }\n  }\n  questions {\n    ...questionFields\n  }\n  workspace {\n    id\n  }\n  activity {\n    id\n  }\n}\n\nfragment questionFields on Question {\n  id\n  type\n  title\n  description\n  content {\n    ... on ComponentActivityScaleOption {\n      type\n      min\n      max\n      customLabel {\n        key\n        label\n      }\n    }\n    ... on ComponentActivityTextOption {\n      characterLimit\n    }\n    ... on ComponentActivityChoiceOptionList {\n      item {\n        sequence\n        label\n        text\n        image {\n          url\n        }\n        value\n      }\n    }\n  }\n  tags\n}"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "questions": {
+      "via": "survey",
+      "collection": "question"
+    },
+    "activity": {
+      "model": "activity",
+      "via": "survey"
+    },
+    "creator": {
+      "model": "member"
+    }
+  }
+}

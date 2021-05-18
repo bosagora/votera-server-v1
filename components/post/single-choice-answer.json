@@ -1,0 +1,26 @@
+{
+  "collectionName": "components_post_single_choice_answers",
+  "info": {
+    "name": "singleChoiceAnswer",
+    "icon": "check",
+    "description": "객관식 문제에 대한 답. 보기 중에서 하나만 고르는 단수선택에 사용됨"
+  },
+  "options": {},
+  "attributes": {
+    "selection": {
+      "type": "component",
+      "repeatable": true,
+      "component": "post.selection",
+      "max": 1
+    },
+    "key": {
+      "type": "string"
+    },
+    "question": {
+      "model": "question"
+    },
+    "sequence": {
+      "type": "integer"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "kind": "singleType",
+  "collectionName": "copyrights",
+  "info": {
+    "name": "copyright"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "text": {
+      "type": "text"
+    }
+  }
+}

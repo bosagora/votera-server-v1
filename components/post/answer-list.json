@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_post_answer_lists",
+  "info": {
+    "name": "answerList",
+    "icon": "file-archive",
+    "description": "이 컴포넌트는 컴포넌트에서 dynamic zone을 지원하는지 테스트할 목적으로 만들었다. 모델 JSON 파일에서 dynamic zone 타입 필드를 작성하는 것이 가능하지만 문제는 이렇게 만들어진 컴포넌트 필드에 대한 렌더링 지원이 안 되어 Strapi 프론트엔드에서는 데이터 입력이 불가능하다는 것이다."
+  },
+  "options": {},
+  "attributes": {
+    "answer": {
+      "type": "dynamiczone",
+      "components": [
+        "post.scale-answer",
+        "post.single-choice-answer"
+      ],
+      "required": true
+    }
+  }
+}

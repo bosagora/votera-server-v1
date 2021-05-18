@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_post_selections",
+  "info": {
+    "name": "selection",
+    "icon": "check-square",
+    "description": "객관식 문제에 대한 답으로 선택한 보기(옵션)"
+  },
+  "options": {},
+  "attributes": {
+    "value": {
+      "type": "integer",
+      "default": 1
+    },
+    "sequence": {
+      "type": "integer"
+    }
+  }
+}

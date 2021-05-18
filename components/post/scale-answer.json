@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_post_scale_answers",
+  "info": {
+    "name": "scaleAnswer",
+    "icon": "tachometer-alt",
+    "description": "리커트 척도 유형의 문제에 대한 답"
+  },
+  "options": {},
+  "attributes": {
+    "value": {
+      "type": "integer"
+    },
+    "question": {
+      "model": "question"
+    },
+    "key": {
+      "type": "string"
+    },
+    "sequence": {
+      "type": "integer"
+    }
+  }
+}

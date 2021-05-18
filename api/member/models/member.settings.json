@@ -1,0 +1,49 @@
+{
+  "kind": "collectionType",
+  "collectionName": "members",
+  "info": {
+    "name": "member",
+    "description": "웍스페이스, 그룹, 액티비티의 멤버. 익명 옵션이 아닌 경우, 그룹이나 액티비티에서 별도의 멤버를 생성하지 않으며 웍스페이스의 멤버가 그 웍스페이스에 속해 있는 모든 그룹이나 액티비티에 접근할 수 있다. 하지만 어떤 익명 옵션으로 만들어지는 그룹인 경우에는 웍스페이스의 멤버와 다른 멤버 계정이 만들어지고 그 활동 가능한 범위는 해당 그룹으로만 제한된다. 마찬가지로 그룹 내의 모든 액티비티는 그룹 멤버로 참여 가능하지만 익명 옵션으로 만든 액티비티라면 그 안에서만 사용할 수 있는 별도의 멤버 계정이 만들어진다. Member는 Workspace, Group, Activity, Post, Interaction, MemberInteraction, MemberRole 등 다른 컬렉션에서 creator, writer, actor 등의 역할로 참조되지만 반대로 Member로부터 다른 컬렉션 정보에 대한 직접 참조를 저장하지 않아야 한다. 의도되지 않은 접근으로 멤버에 연결된 모든 정보가 노출될 수 있기 때문에 연결 고리를 끊기 위한 것이다."
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "username": {
+      "type": "string",
+      "required": true
+    },
+    "address": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "lastAccessTime": {
+      "type": "datetime"
+    },
+    "user": {
+      "plugin": "users-permissions",
+      "model": "user",
+      "via": "members",
+      "private": true
+    },
+    "voterCard": {
+      "type": "string",
+      "required": true,
+      "configurable": false,
+      "private": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "OPEN",
+        "DELETED"
+      ],
+      "private": true,
+      "default": "OPEN",
+      "required": true
+    }
+  }
+}

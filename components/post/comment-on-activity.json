@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_post_comment_on_activities",
+  "info": {
+    "name": "commentOnActivity",
+    "icon": "comment-dots",
+    "description": "액티비티에 대한 댓글"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "text"
+    },
+    "attachment": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "plugin": "upload",
+      "required": false
+    }
+  }
+}

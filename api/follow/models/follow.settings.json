@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "follows",
+  "info": {
+    "name": "follow",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "member": {
+      "type": "string"
+    },
+    "target": {
+      "type": "string"
+    },
+    "isActive": {
+      "type": "boolean"
+    },
+    "push": {
+      "model": "push"
+    },
+    "isFeedActive": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/agora",
+      "handler": "agora.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/agora",
+      "handler": "agora.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/agora",
+      "handler": "agora.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

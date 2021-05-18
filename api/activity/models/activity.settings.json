@@ -1,0 +1,83 @@
+{
+  "kind": "collectionType",
+  "collectionName": "activities",
+  "info": {
+    "name": "activity",
+    "description": "그룹 안에 만들어지는 다양한 액티비티. 설문, 퀴즈, 폴, Q&A, 아이디어박스 등 기한이 정해진 활동이나 게시판처럼 기한이 정해져 있지 않고 게시물을 올릴 수 있는 공간에 해당."
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "SURVEY",
+        "POLL",
+        "BOARD"
+      ],
+      "required": true
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "OPEN",
+        "CLOSED",
+        "BLOCKED",
+        "DELETED"
+      ],
+      "required": true
+    },
+    "posts": {
+      "collection": "post",
+      "via": "activity"
+    },
+    "interactions": {
+      "via": "activity",
+      "collection": "interaction"
+    },
+    "survey": {
+      "via": "activity",
+      "model": "survey"
+    },
+    "poll": {
+      "via": "activity",
+      "model": "poll"
+    },
+    "creator": {
+      "model": "member"
+    },
+    "roles": {
+      "via": "activity",
+      "collection": "member-role"
+    },
+    "attachment": {
+      "collection": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "plugin": "upload",
+      "required": false
+    },
+    "board": {
+      "model": "board",
+      "via": "activities"
+    },
+    "proposal": {
+      "via": "activities",
+      "model": "proposal"
+    }
+  }
+}

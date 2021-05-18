@@ -1,0 +1,28 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/copyright",
+      "handler": "copyright.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/copyright",
+      "handler": "copyright.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/copyright",
+      "handler": "copyright.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

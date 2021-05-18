@@ -1,0 +1,57 @@
+{
+  "kind": "collectionType",
+  "collectionName": "interactions",
+  "info": {
+    "name": "interaction",
+    "description": "사용자가 특정 게시물이나 그룹, 액티비티, 게시물, 댓글, 답글 등에 대해 좋아요(LIKE), 신고(REPORT), 조회(READ) 등의 반응을 할 때 이를 저장합니다. 멤버에 대한 반응(차단하기, 보이스 양도 등)은 memberInteraction이라는 별도 타입으로 정의함.\n\n이 컬렉션에 대한 쿼리 예시는 다음과 같음\n\n## Query 작성 방법:\n\nquery {\n  interactions {\n    id\n    created_by {\n      id\n    }\n    type\n    action {\n      __typename\n      ... on ComponentInteractionLike {\n        type\n      }\n      ... on ComponentInteractionRead {\n        count\n      }      ... on ComponentInteractionReport {\n        reason\n        text\n      }\n    }\n    activity {\n      id\n    }\n    group {\n      id\n    }\n    post {\n      id\n    }\n  }\n}\n\n\n\n## Mutation 작성 방법:\n\nmutation {\n  createInteraction( input:\n    { data: {\n     type: REPORT_GROUP,\n      action: [ {\n        __typename:\"ComponentInteractionReport\"\n        reason: PRIVACY_VIOLATION\n      } ],\n      group: 1 }\n    }\n  )\n  {\n  interaction {\n    id\n  }\n}"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "LIKE_GROUP",
+        "LIKE_POST",
+        "REPORT_GROUP",
+        "REPORT_POST",
+        "READ_GROUP",
+        "READ_ACTIVITY",
+        "READ_POST"
+      ],
+      "required": true
+    },
+    "action": {
+      "type": "dynamiczone",
+      "components": [
+        "interaction.report",
+        "interaction.read",
+        "interaction.like"
+      ],
+      "required": true,
+      "max": 1
+    },
+    "activity": {
+      "model": "activity",
+      "via": "interactions"
+    },
+    "post": {
+      "model": "post",
+      "via": "interactions"
+    },
+    "actor": {
+      "model": "member"
+    },
+    "proposal": {
+      "via": "interactions",
+      "model": "proposal"
+    },
+    "user": {
+      "plugin": "users-permissions",
+      "model": "user"
+    }
+  }
+}

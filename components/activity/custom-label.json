@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_activity_custom_labels",
+  "info": {
+    "name": "customLabel",
+    "icon": "sort-alpha-down",
+    "description": "리커트 척도 문제의 보기에 지정하는 사용자 정의 레이블. 기본적으로는 시스템이 제공하는 레이블을 사용할 수 있지만, 시스템과 다른 방식으로 레이블을 붙이고 싶을 때 사용함. 예를 들어, 5점 척도 문제에서 빈도를 묻는 질문에서, 1. 전혀 경험 없음, 2. 한 번 경험, 3. 가끔 경험, 4. 자주 경험, 5. 항상 경험 식의 보기를 주고 싶을 때 사용할 수 있음. 양 끝 자리에만 레이블을 보여주고 다른 눈금 자리에는 보여주지 않으려면 양 끝 자리 레이블만 지정하면 됨. 즉, [ { key: 1, label: \"전혀 경험 없음\" }, { key: 5, label: \"항상 경험\" } ]"
+  },
+  "options": {},
+  "attributes": {
+    "key": {
+      "type": "integer",
+      "required": true
+    },
+    "label": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "collectionName": "components_interaction_reads",
+  "info": {
+    "name": "read",
+    "icon": "bullseye",
+    "description": "사용자 반응 중에서 조회(읽음)에 해당하는 경우 추가 저장 정보"
+  },
+  "options": {},
+  "attributes": {
+    "count": {
+      "type": "integer",
+      "default": 1
+    }
+  }
+}

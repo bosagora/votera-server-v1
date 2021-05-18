@@ -1,0 +1,18 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pushes",
+  "info": {
+    "name": "push",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "token": {
+      "type": "string"
+    }
+  }
+}

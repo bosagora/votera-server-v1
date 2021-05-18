@@ -1,0 +1,21 @@
+{
+  "collectionName": "components_interaction_reports",
+  "info": {
+    "name": "report",
+    "icon": "phone-volume",
+    "description": "신고 사유에 해당하는 컴포넌트 타입"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "text"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "RESOLVED",
+        "UNRESOLVED"
+      ]
+    }
+  }
+}

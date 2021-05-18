@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_post_comment_on_posts",
+  "info": {
+    "name": "commentOnPost",
+    "icon": "comments",
+    "description": "액티비티 참여 응답(설문, 투표, 퀴즈에 대한 응답, 게시판 게시글, 아이디어 제안 등)에 달리는 댓글"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "text"
+    },
+    "attachment": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "plugin": "upload",
+      "required": false
+    }
+  }
+}

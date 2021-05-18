@@ -1,0 +1,32 @@
+{
+    "collectionName": "components_navigation_navigations",
+    "info": {
+        "name": "navigation",
+        "icon": "arrow-right",
+        "description": ""
+    },
+    "options": {},
+    "attributes": {
+        "activityId": {
+            "type": "string"
+        },
+        "activityType": {
+            "type": "string"
+        },
+        "postId": {
+            "type": "string"
+        },
+        "status": {
+            "type": "string"
+        },
+        "groupId": {
+            "type": "string"
+        },
+        "memberId": {
+            "type": "string"
+        },
+        "proposalId": {
+            "type": "string"
+        }
+    }
+}

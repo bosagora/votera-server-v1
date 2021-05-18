@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_interaction_likes",
+  "info": {
+    "name": "like",
+    "icon": "heart",
+    "description": "사용자 반응이 좋아요에 해당하는 경우 추가 저장 정보"
+  },
+  "options": {},
+  "attributes": {
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "LIKE",
+        "BEST",
+        "SAD",
+        "HAPPY",
+        "ANGRY"
+      ],
+      "required": true,
+      "default": "LIKE"
+    }
+  }
+}
