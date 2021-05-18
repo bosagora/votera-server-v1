@@ -1,0 +1,33 @@
+{
+  "kind": "singleType",
+  "collectionName": "agoras",
+  "info": {
+    "name": "Agora",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "ProposalFeeAddress": {
+      "type": "string"
+    },
+    "ProposalFeeRatio": {
+      "type": "decimal",
+      "default": 0.01,
+      "max": 0.5,
+      "min": 0
+    },
+    "privacyTermUrl": {
+      "type": "string"
+    },
+    "userServiceTermUrl": {
+      "type": "string"
+    },
+    "voteResultUrl": {
+      "type": "string"
+    }
+  }
+}

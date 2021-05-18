@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_post_replies",
+  "info": {
+    "name": "reply",
+    "icon": "reply",
+    "description": "댓글에 달리는 답글"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "text"
+    },
+    "replyTo": {
+      "model": "member"
+    },
+    "attachment": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "plugin": "upload",
+      "required": false
+    }
+  }
+}

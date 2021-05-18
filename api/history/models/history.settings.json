@@ -1,0 +1,19 @@
+{
+  "kind": "singleType",
+  "collectionName": "histories",
+  "info": {
+    "name": "history"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "companyEvent": {
+      "type": "component",
+      "repeatable": true,
+      "component": "homepage.company-event"
+    }
+  }
+}

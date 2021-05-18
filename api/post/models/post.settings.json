@@ -1,0 +1,76 @@
+{
+  "kind": "collectionType",
+  "collectionName": "posts",
+  "info": {
+    "name": "post",
+    "description": "액티비티에 대한 참여 형태는 액티비티 종류에 따라 설문조사, 퀴즈, 투표에 대한 답안 작성, 게시판에서의 게시물 작성, Q&A에서의 질문 작성, 아이디어박스에서의 제안 작성 등이며, 그렇게 작성된 것들을 게시물이라고 볼 수 있다. 이러한 응답 형태의 참여가 아니더라도 액티비티 자체 또는 그 액티비티에 참여한 사람들의 응답에 대한 의견을 표시하기 위해 작성된 댓글 또는 답글도 모두 게시물로 간주된다.\n\n## Mutation 작성 방법:\n(퀴즈 참여 응답에 해당하는 포스트 생성하는 예시)\n\nmutation newQuizResponse {\n createPost (input: {\n data: {\n type: QUIZ_RESPONSE,\n content: [\n {\n __typename: \"ComponentPostSingleChoiceAnswer\",\n selection: {\n __typename: \"ComponentPostSelection\",\n __component: \"post.selection\",\n sequence: 3,\n value: 55,\n }\n question: 4\n },\n {\n __typename: \"ComponentPostMultipleChoiceAnswer\",\n __component: \"post.multiple-choice-answer\",\n selection: [\n {\n __typename: \"ComponentPostSelection\",\n __component: \"post.selection\",\n sequence: 1,\n value: 18\n },\n {\n __typename: \"ComponentPostSelection\",\n __component: \"post.selection\",\n sequence: 2,\n value: 810\n },\n {\n __typename: \"ComponentPostSelection\",\n __component: \"post.selection\",\n sequence: 3,\n value: 432\n }\n ],\n question: 5\n }\n ]\n activity: 1,\n }}) {\n post {\n ...postFields\n }\n }\n }\n"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "SURVEY_RESPONSE",
+        "POLL_RESPONSE",
+        "BOARD_ARTICLE",
+        "COMMENT_ON_ACTIVITY",
+        "COMMENT_ON_POST",
+        "REPLY_ON_COMMENT"
+      ],
+      "required": true
+    },
+    "content": {
+      "type": "dynamiczone",
+      "components": [
+        "post.comment-on-activity",
+        "post.comment-on-post",
+        "post.reply",
+        "post.scale-answer",
+        "post.single-choice-answer",
+        "post.article"
+      ],
+      "required": false
+    },
+    "activity": {
+      "via": "posts",
+      "model": "activity"
+    },
+    "interactions": {
+      "via": "post",
+      "collection": "interaction"
+    },
+    "parentPost": {
+      "model": "post",
+      "via": "childPosts"
+    },
+    "childPosts": {
+      "collection": "post",
+      "via": "parentPost"
+    },
+    "writer": {
+      "model": "member"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "OPEN",
+        "DELETED"
+      ]
+    },
+    "attachment": {
+      "collection": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "plugin": "upload",
+      "required": false
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_post_articles",
+  "info": {
+    "name": "article",
+    "icon": "newspaper",
+    "description": "게시판에 올리는 게시글"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "text": {
+      "type": "text"
+    },
+    "attachment": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "plugin": "upload",
+      "required": false
+    }
+  }
+}

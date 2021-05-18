@@ -1,0 +1,21 @@
+{
+  "kind": "singleType",
+  "collectionName": "versions",
+  "info": {
+    "name": "Version",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "ios": {
+      "type": "string"
+    },
+    "android": {
+      "type": "string"
+    }
+  }
+}

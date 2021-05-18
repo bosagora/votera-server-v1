@@ -1,0 +1,141 @@
+{
+  "kind": "collectionType",
+  "collectionName": "proposals",
+  "info": {
+    "name": "proposal",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "text"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "SYSTEM",
+        "BUSINESS"
+      ],
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "PENDING_ASSESS",
+        "ASSESS",
+        "PENDING_VOTE",
+        "VOTE",
+        "REJECT",
+        "CANCEL",
+        "DELETED",
+        "CLOSED"
+      ],
+      "required": true
+    },
+    "fundingAmount": {
+      "type": "decimal"
+    },
+    "proposalId": {
+      "type": "string",
+      "required": false,
+      "unique": true
+    },
+    "logo": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "plugin": "upload",
+      "required": false,
+      "pluginOptions": {}
+    },
+    "attachment": {
+      "collection": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "plugin": "upload",
+      "required": false,
+      "pluginOptions": {}
+    },
+    "activities": {
+      "collection": "activity",
+      "via": "proposal"
+    },
+    "creator": {
+      "model": "member"
+    },
+    "roles": {
+      "via": "proposal",
+      "collection": "member-role"
+    },
+    "interactions": {
+      "collection": "interaction",
+      "via": "proposal"
+    },
+    "assessPeriod": {
+      "type": "component",
+      "repeatable": false,
+      "component": "common.period"
+    },
+    "votePeriod": {
+      "type": "component",
+      "repeatable": false,
+      "component": "common.period",
+      "required": true
+    },
+    "proposer_address": {
+      "type": "string"
+    },
+    "proposal_fee_address": {
+      "type": "string"
+    },
+    "proposal_fee": {
+      "type": "decimal"
+    },
+    "tx_hash_proposal_fee": {
+      "type": "string"
+    },
+    "vote_start_height": {
+      "type": "integer"
+    },
+    "vote_end_height": {
+      "type": "integer"
+    },
+    "doc_hash": {
+      "type": "string"
+    },
+    "vote_fee": {
+      "type": "decimal"
+    },
+    "tx_hash_vote_fee": {
+      "type": "string"
+    },
+    "validators": {
+      "type": "text"
+    },
+    "proposal_begin": {
+      "type": "integer"
+    },
+    "member_count": {
+      "type": "integer",
+      "default": 0,
+      "required": true
+    }
+  }
+}

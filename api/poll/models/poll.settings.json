@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "polls",
+  "info": {
+    "name": "poll",
+    "description": "액티비티를 구성하는 내용 중 투표(Poll) 양식에 대한 내용만 따로 저장. 실제 액티비티로 만들어지는 투표 뿐만 아니라 여러 투표에 공통으로 사용할 수 있게 만든 템플릿도 저장 가능."
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "questions": {
+      "via": "poll",
+      "collection": "question"
+    },
+    "activity": {
+      "model": "activity",
+      "via": "poll"
+    },
+    "creator": {
+      "model": "member"
+    }
+  }
+}

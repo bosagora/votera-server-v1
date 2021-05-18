@@ -1,0 +1,17 @@
+{
+  "collectionName": "components_activity_choice_options",
+  "info": {
+    "name": "choiceOption",
+    "icon": "check-circle",
+    "description": "객관식 문제에서 선택가능한 선택지(보기 또는 옵션) 하나에 해당하는 컴포넌트.\n예시)\n\"가장 좋아하는 음식 하나를 다음 네 가지 중에서 고르세요.\"\n가. 피자\t나. 짜장\t다. 김치볶음밥\t라. 된장찌개\n\n위 문제에서  보기는 [가, 나, 다, 라]의 네 개이다.\n위 예에서, '가', '나', '다', '라'는 ChoiceOption 컴포넌트의 레이블(label) 필드, 이 보기들이 문제 내에서 보여지는 순서는 ChoiceOption 컴포넌트의 순서(sequence) 필드, '피자', '짜장면', '김치볶음밥', '된장찌개' 등의 문구는 텍스트(text) 필드, 마지막으로 사용자가 답안 작성시 선택한 보기에 대해서 전체 집계할 때 그 선택된 보기들을 어떤 숫자값으로 매핑할지는 값(value) 필드에 저장한다.\n보기 항목에 이미지를 나타내고자 할 경우, 이미지(image) 필드에 저장한다."
+  },
+  "options": {},
+  "attributes": {
+    "sequence": {
+      "type": "integer"
+    },
+    "text": {
+      "type": "string"
+    }
+  }
+}

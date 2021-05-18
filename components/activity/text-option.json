@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_activity_text_options",
+  "info": {
+    "name": "textOption",
+    "icon": "font",
+    "description": "주관식 문제에 대해 설정하는 옵션"
+  },
+  "options": {},
+  "attributes": {
+    "characterLimit": {
+      "type": "integer"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_activity_survey_options",
+  "info": {
+    "name": "surveyOption",
+    "icon": "border-all",
+    "description": "액티비티에 대한 옵션 중 설문에만 해당하는 추가 설정 옵션"
+  },
+  "options": {},
+  "attributes": {
+    "isResubmittable": {
+      "type": "boolean",
+      "default": true
+    },
+    "isShowResultOnlyToOwner": {
+      "type": "boolean"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_common_periods",
+  "info": {
+    "name": "period",
+    "icon": "calendar-week",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "begin": {
+      "type": "date",
+      "required": true
+    },
+    "end": {
+      "type": "date",
+      "required": true
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "kind": "collectionType",
+  "collectionName": "questions",
+  "info": {
+    "name": "question",
+    "description": "설문, 퀴즈, 투표 등에 포함되는 문제.\n각 문제를 별도로 저장함으로써 참여자의 답안이 어떤 문제를 참조하는 지 지정할 수 있는 장점이 있으며, 문제은행을 만들기 용이하다. 설문조사, 퀴즈, 투표 양식을 새로 만들어 저장하려면, 먼저 이 컬렉션에 문제들을 생성하여 저장하고, 만들어진 문제들의 ID 목록을 Survey, Quiz, Poll 컬렉션의 questions 필드에 저장한다.\n\n## Mutation 방법:\nmutation newQuestion {\n createQuestion (input: {\n data: {\n sequence: 1\n type: SINGLE_CHOICE,\n title: \"수리능력 평가\",\n description: \"1부터 10까지의 합은?\",\n content: {\n __typename: \"ComponentActivityChoiceOptionList\",\n item: [\n {\n sequence: 1,\n label: \"가\",\n text: \"11\",\n value: 11\n },\n {\n sequence: 2,\n label: \"나\",\n text: \"50\",\n value: 50\n },\n {\n sequence: 3,\n label: \"다\",\n text: \"55\",\n value: 55\n },\n {\n sequence: 4,\n label: \"라\",\n text: \"101\",\n value: 101\n },     \n ]\n }\n tags: \"#수리영역 #덧셈 #퀴즈 #자연수\",\n point: 10,\n quiz: 1,\n survey: null,\n poll: null,\n workspace: 1\n }\n }\n) {\n question {\n ...questionFields\n }\n }\n }\n"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "SINGLE_CHOICE",
+        "SCALE"
+      ],
+      "required": true
+    },
+    "content": {
+      "type": "dynamiczone",
+      "components": [
+        "activity.scale-option",
+        "activity.text-option",
+        "activity.choice-option-list"
+      ],
+      "max": 1,
+      "required": true
+    },
+    "sequence": {
+      "type": "integer",
+      "required": true
+    },
+    "survey": {
+      "model": "survey",
+      "via": "questions"
+    },
+    "poll": {
+      "model": "poll",
+      "via": "questions"
+    }
+  }
+}

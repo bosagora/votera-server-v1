@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_activity_poll_options",
+  "info": {
+    "name": "pollOption",
+    "icon": "vote-yea",
+    "description": "액티비티에 대한 옵션 중 투표에만 해당하는 추가 설정 옵션"
+  },
+  "options": {},
+  "attributes": {
+    "isOptionsShuffled": {
+      "type": "boolean"
+    },
+    "isOthersCanAddOptions": {
+      "type": "boolean"
+    },
+    "isShowResultOnlyToOwner": {
+      "type": "boolean"
+    },
+    "isResubmittable": {
+      "type": "boolean"
+    }
+  }
+}

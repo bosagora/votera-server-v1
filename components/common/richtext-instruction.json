@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_richtextinstruction_richtext_instructions",
+  "info": {
+    "name": "richtextDescription",
+    "icon": "info",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "description": {
+      "type": "richtext"
+    }
+  }
+}
