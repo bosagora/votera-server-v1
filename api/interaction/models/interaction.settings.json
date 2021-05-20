@@ -39,8 +39,8 @@
       "via": "interactions"
     },
     "post": {
-      "model": "post",
-      "via": "interactions"
+      "via": "interactions",
+      "model": "post"
     },
     "actor": {
       "model": "member"

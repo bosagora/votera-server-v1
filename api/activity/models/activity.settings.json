@@ -38,8 +38,8 @@
       "required": true
     },
     "posts": {
-      "collection": "post",
-      "via": "activity"
+      "via": "activity",
+      "collection": "post"
     },
     "interactions": {
       "via": "activity",

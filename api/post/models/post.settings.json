@@ -37,7 +37,8 @@
     },
     "activity": {
       "via": "posts",
-      "model": "activity"
+      "model": "activity",
+      "index": true
     },
     "interactions": {
       "via": "post",
@@ -70,7 +71,14 @@
         "videos"
       ],
       "plugin": "upload",
-      "required": false
+      "required": false,
+      "pluginOptions": {}
+    },
+    "likeCount": {
+      "type": "integer",
+      "default": 0,
+      "required": false,
+      "index": true
     }
   }
 }
