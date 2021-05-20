@@ -41,7 +41,20 @@ module.exports = {
         return { count: 1 };
     },
     async toggleLike(ctx) {
-        return await strapi.services.interaction.toggleLike(ctx);
+        const graphqlApi = !!ctx.request.body.input;
+        const { isLike, postId, memberId } = graphqlApi ? ctx.request.body.input : ctx.request.body;
+        if (!postId || !memberId) return ctx.badRequest('missing parameter');
+        if (!ctx.state.user) return ctx.unauthorized('unauthorized');
+
+        const checkMember = await strapi.services.member.checkMemberUser(memberId, ctx.state.user);
+        if (!checkMember.member) return ctx.badRequest('member.notFound');
+        if (!checkMember.authorized) return ctx.unauthorized('member.unauthorized');
+
+        const result = await strapi.services.interaction.toggleLike(isLike, postId, memberId, ctx.state.user);
+        if (result.interaction) {
+            result.interaction = sanitizeEntity(result.interaction, { model: strapi.models.interaction });
+        }
+        return result;
     },
     async reportedPosts(ctx) {
         const { proposalId } = ctx.request.params;

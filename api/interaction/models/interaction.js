@@ -3,7 +3,7 @@
 module.exports = {
     lifecycles: {
         async afterCreate(result) {
-            console.log('🚀 ~ result', result)
+            // console.log('🚀 ~ result', result)
             const interactionType = result.type;
             const ableFeedTypes = ['LIKE_POST'];
             if (ableFeedTypes.includes(interactionType) && result.post?.type !== 'REPLY_ON_COMMENT') {

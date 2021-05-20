@@ -8,14 +8,13 @@ const mongoose = require('mongoose');
  */
 
 module.exports = {
-    async toggleLike(ctx) {
-        // type : Event | Article | Proposal | Comment
-        const { isLike, postId, memberId } = ctx.request.body.input;
+    async toggleLike(isLike, postId, memberId, user) {
         try {
             const interactions = await strapi.services.interaction.find({
                 type: 'LIKE_POST',
                 post: postId,
                 actor: memberId ? memberId : ctx.state.member.id,
+                user: user.id
             });
             let interaction;
             if (isLike) {
@@ -34,7 +33,9 @@ module.exports = {
                         ],
                         post: postId,
                         actor: memberId ? memberId : ctx.state.member.id,
+                        user: user.id,
                     });
+                    await strapi.query('post').update({ id: postId }, { $inc: { likeCount: 1 }});
                 }
             } else {
                 //좋아요 취소
@@ -44,6 +45,7 @@ module.exports = {
                         console.log('toggleLike Delete Error', postId);
                     } else {
                         interaction = await strapi.services.interaction.delete({ id: interactions[0].id });
+                        await strapi.query('post').update({ id: postId }, { $inc: { likeCount: -1 }});
                     }
                 } else {
                     // Like가 없는데, Like 제가 요청 => 그대로 둔다

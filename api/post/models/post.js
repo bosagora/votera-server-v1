@@ -59,7 +59,7 @@ module.exports = {
             }
         },
         async afterCreate(result) {
-            console.log('🚀 ~ result', result)
+            // console.log('🚀 ~ result', result)
             try {
                 const useFeedTypes = [
                     'COMMENT_ON_POST', // ACTIVITY_COMMENT

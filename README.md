@@ -7,7 +7,7 @@ Votera Server (Using strapi server)
 |Application|Activity|count, find, findOne, summarize|
 |Application|Agora|find|
 |Application|Feeds|count, find, findone, update|
-|Application|Follow|count, createfollow, find, findone, togglefollowall, updatetargetsfollow|
+|Application|Follow|count, create, createfollow, find, findone, togglefollowall, updatetargetsfollow|
 |Application|Interaction|count, create, find, findone, readinteraction, reportedposts, reportpost, |Applicationtogglelike, update|
 |Application|Member|all|
 |Application|MemberRole|count, find, findone, leaveproposal|
