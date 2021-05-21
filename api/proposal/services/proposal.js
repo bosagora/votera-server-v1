@@ -10,6 +10,8 @@ const { ApolloError } = require('apollo-server-errors');
 const boasdk = require('boa-sdk-ts');
 const crypto = require('crypto');
 
+const BOA_DECIMAL = 10000000;
+
 async function uniqueCheck(id) {
     try {
         const idFound = await strapi.services.proposal.find({ proposalId: id });
@@ -134,11 +136,14 @@ module.exports = {
             if (!proposal.proposer_address) throw new Error('missing parameter');
             if (proposal.type === 'BUSINESS') {
                 if (!proposal.fundingAmount) throw new Error('missing parameter');
-                // 현재 소숫점을 처리하지 않으므로 Round 처리
-                proposal.fundingAmount = Math.round(proposal.fundingAmount);
 
+                const fundingAmount = boasdk.JSBI.BigInt(proposal.fundingAmount);
                 const agora = await strapi.services.agora.getAgora();
-                proposal.proposal_fee = Math.round(proposal.fundingAmount * agora.ProposalFeeRatio);
+                const proposalRatio = boasdk.JSBI.BigInt(Math.round(agora.ProposalFeeRatio * BOA_DECIMAL));
+                const proposalFee = boasdk.JSBI.divide(boasdk.JSBI.multiply(fundingAmount, proposalRatio), boasdk.JSBI.BigInt(BOA_DECIMAL));
+
+                proposal.fundingAmount = fundingAmount.toString();
+                proposal.proposal_fee = proposalFee.toString();
                 proposal.proposal_fee_address = agora.ProposalFeeAddress;
             }
 
@@ -284,7 +289,7 @@ module.exports = {
                 return { status: 'INVALID' };
             } else if (!proposal.proposal_fee_address) {
                 return { status: 'INVALID' };
-            } else if (!proposal.proposal_fee || proposal.proposal_fee <= 0) {
+            } else if (!proposal.proposal_fee) {
                 return { status: 'INVALID' };
             }
 
@@ -311,7 +316,7 @@ module.exports = {
                         proposal.proposal_fee,
                     );
 
-                    if (txResult && txResult.result === 1) {
+                    if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
                         if (txResult.tx_hash_proposal_fee) {
                             await strapi
                                 .query('proposal')
@@ -360,7 +365,7 @@ module.exports = {
             } else if (proposal.type === 'BUSINESS') {
                 if (!proposal.proposal_fee_address) {
                     return { status: 'INVALID' };
-                } else if (!proposal.proposal_fee || proposal.proposal_fee <= 0) {
+                } else if (!proposal.proposal_fee) {
                     return { status: 'INVALID' };
                 } else if (!proposal.tx_hash_proposal_fee) {
                     return { status: 'IRRELEVANT' };
@@ -384,7 +389,8 @@ module.exports = {
                         const vote_fee = await strapi.services.boaclient.getVotingFee();
 
                         if (validators) {
-                            proposal.vote_fee = vote_fee * validators.length;
+                            const proposalVoteFee = boasdk.JSBI.multiply(vote_fee, boasdk.JSBI.BigInt(validators.length));
+                            proposal.vote_fee = proposalVoteFee.toString();
                             proposal.validators = JSON.stringify(validators.map((validator) => validator.address));
 
                             await strapi
@@ -414,7 +420,7 @@ module.exports = {
                             validators,
                         );
 
-                        if (txResult && txResult.result === 1) {
+                        if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
                             if (txResult.tx_hash_vote_fee) {
                                 await strapi
                                     .query('proposal')
@@ -496,7 +502,7 @@ module.exports = {
                         proposal.proposal_fee_address,
                         proposal.proposal_fee,
                     );
-                    if (txResult && txResult.result === 1) {
+                    if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
                         if (txResult.tx_hash_proposal_fee) {
                             await strapi
                                 .query('proposal')
@@ -543,7 +549,7 @@ module.exports = {
                                     validators,
                                 );
 
-                                if (txResult && txResult.result === 1) {
+                                if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
                                     if (txResult.tx_hash_vote_fee) {
                                         await strapi
                                             .query('proposal')
@@ -572,7 +578,7 @@ module.exports = {
                                 validators,
                             );
 
-                            if (txResult && txResult.result === 1) {
+                            if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
                                 if (txResult.tx_hash_vote_fee) {
                                     // change to VOTE
                                     await strapi

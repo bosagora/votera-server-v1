@@ -38,7 +38,7 @@ name: String!
 description: String
 type: ENUM_PROPOSAL_TYPE!
 status: ENUM_PROPOSAL_STATUS!
-fundingAmount: Float
+fundingAmount: String
 proposalId: String
 logo: UploadFile
 creator: Member
@@ -46,12 +46,12 @@ assessPeriod: ComponentCommonPeriod
 votePeriod: ComponentCommonPeriod
 proposer_address: String
 proposal_fee_address: String
-proposal_fee: Float
+proposal_fee: String
 tx_hash_proposal_fee: String
 vote_start_height: Int
 vote_end_height: Int
 doc_hash: String
-vote_fee: Float
+vote_fee: String
 tx_hash_vote_fee: String
 validators: String
 proposal_begin: Int
