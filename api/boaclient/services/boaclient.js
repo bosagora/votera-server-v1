@@ -3,6 +3,11 @@ const BOASodium = require('boa-sodium-ts');
 const URI = require('urijs');
 const sb = require('smart-buffer');
 
+const CHECK_RESULT_NOTFOUND = 0;
+const CHECK_RESULT_FOUND = 1;
+const CHECK_RESULT_INCONSISTENT = 2;
+const CHECK_RESULT_INSUFFICIENT = 3;
+
 module.exports = {
 
     async initialize() {
@@ -76,10 +81,14 @@ module.exports = {
     },
 
     async getVotingFee() {
-        const fee = await this.boaClient.getVotingFee(strapi.config.boaclient.service.vote_payload_size);
-        return boasdk.JSBI.toNumber(fee);
+        return await this.boaClient.getVotingFee(strapi.config.boaclient.service.vote_payload_size);
     },
 
+    CHECK_RESULT_NOTFOUND: CHECK_RESULT_NOTFOUND,
+    CHECK_RESULT_FOUND: CHECK_RESULT_FOUND,
+    CHECK_RESULT_INCONSISTENT: CHECK_RESULT_INCONSISTENT,
+    CHECK_RESULT_INSUFFICIENT: CHECK_RESULT_INSUFFICIENT,
+    
     /**
      * @returns
      * result
@@ -92,7 +101,7 @@ module.exports = {
     async checkProposalFeeTransaction(proposal_id, begin, address, fee_address, proposal_fee) {
         try {
             if (!address || !proposal_fee || !fee_address) {
-                return { result: 0 };
+                return { result: CHECK_RESULT_NOTFOUND };
             }
 
             const public_key = new boasdk.PublicKey(address);
@@ -122,17 +131,17 @@ module.exports = {
 
                     const find_idx = tx.outputs.findIndex((o) => (new boasdk.PublicKey(o.lock.bytes).toString() === fee_address));
                     if (find_idx < 0) {
-                        result = 2; // found proposal fee transaction but fee_address inconsistent
+                        result = CHECK_RESULT_INCONSISTENT; // found proposal fee transaction but fee_address inconsistent
                         continue;
                     }
 
                     tx_hash_proposal_fee = item.tx_hash;
 
                     if (boasdk.JSBI.greaterThanOrEqual(tx.outputs[find_idx].value, expected_proposal_fee)) {
-                        return { result: 1, tx_hash_proposal_fee };
+                        return { result: CHECK_RESULT_FOUND, tx_hash_proposal_fee };
                     }
 
-                    result = 3; // found proposal fee transaction but proposal_fee is smaller than expected
+                    result = CHECK_RESULT_INSUFFICIENT; // found proposal fee transaction but proposal_fee is smaller than expected
                 }
 
                 page += 1;
@@ -144,7 +153,7 @@ module.exports = {
             strapi.log.warn(err, 'checkProposalFeeTransaction proposal_id=%s address=%s', proposal_id, address);
         }
 
-        return { result: 0 };
+        return { result: CHECK_RESULT_NOTFOUND };
     },
 
     /**
@@ -164,7 +173,7 @@ module.exports = {
     async checkProposalDataTransaction(address, begin, expected_data, validators) {
         try {
             if (!address || !expected_data || !validators) {
-                return { result: 0 };
+                return { result: CHECK_RESULT_NOTFOUND };
             }
 
             const public_key = new boasdk.PublicKey(address);
@@ -198,7 +207,7 @@ module.exports = {
                         || Buffer.compare(payload.doc_hash.data, expected_data.doc_hash.data) !== 0
                         || boasdk.JSBI.notEqual(payload.vote_fee, expected_data.vote_fee)
                         || Buffer.compare(payload.proposer_address.data, expected_data.proposer_address.data) !== 0) {
-                        result = 2; // found proposal data but data is inconsistent
+                        result = CHECK_RESULT_INCONSISTENT; // found proposal data but data is inconsistent
                         continue;
                     }
                     if (payload.proposal_type === boasdk.ProposalType.Fund) {
@@ -206,7 +215,7 @@ module.exports = {
                             || boasdk.JSBI.notEqual(payload.proposal_fee, expected_data.proposal_fee)
                             || Buffer.compare(payload.tx_hash_proposal_fee.data, expected_data.tx_hash_proposal_fee.data) !== 0
                             || Buffer.compare(payload.proposal_fee_address.data, expected_data.proposal_fee_address.data) !== 0) {
-                            result = 2; // found proposal data but data is inconsistent
+                            result = CHECK_RESULT_INCONSISTENT; // found proposal data but data is inconsistent
                             continue;
                         }
                     }
@@ -227,14 +236,14 @@ module.exports = {
                         sum_vote_cost = boasdk.JSBI.add(sum_vote_cost, tx.outputs[find_idx].value);
                     }
                     if (v_idx >= 0) {
-                        result = 3; // found proposal data transaction but vote_fee is smaller or missing
+                        result = CHECK_RESULT_INSUFFICIENT; // found proposal data transaction but vote_fee is smaller or missing
                         continue;
                     }
                     if (boasdk.JSBI.greaterThanOrEqual(sum_vote_cost, expected_data.vote_fee)) {
-                        return { result: 1, tx_hash_vote_fee };
+                        return { result: CHECK_RESULT_FOUND, tx_hash_vote_fee };
                     }
 
-                    result = 3; // found proposal data transaction but vote_fee is smaller or missing
+                    result = CHECK_RESULT_INSUFFICIENT; // found proposal data transaction but vote_fee is smaller or missing
                 }
 
                 page += 1;
@@ -246,7 +255,7 @@ module.exports = {
             strapi.log.warn(err, 'checkProposalDataTransaction proposal_id=%s address=%s', expected_data.proposal_id, address);
         }
 
-        return { result: 0 };
+        return { result: CHECK_RESULT_NOTFOUND };
     },
     async getBallotData(address, app_name, proposal_id, begin, end) {
         try {

@@ -12,7 +12,7 @@ module.exports = {
             type: ENUM_PROPOSAL_TYPE
             evalPeriod: ComponentCommonPeriod
             votePeriod: ComponentCommonPeriod
-            fundingAmount: Float
+            fundingAmount: String
             logo: UploadFile
             attachment: [UploadFile]
         }
@@ -21,7 +21,7 @@ module.exports = {
             evalEnd: DateTime
             voteBegin: DateTime
             voteEnd: DateTime
-            fundingAmount: Float
+            fundingAmount: String
         }
         input createVoteraProposalInput  {
             proposal: ProposalInput
@@ -38,7 +38,7 @@ module.exports = {
             status: ENUM_FEE_STATUS
             proposer_address: String
             destination: String
-            amount: Float
+            amount: String
         }
         type VoteFeePayload {
             status: ENUM_FEE_STATUS

@@ -42,7 +42,7 @@
       "required": true
     },
     "fundingAmount": {
-      "type": "decimal"
+      "type": "string"
     },
     "proposalId": {
       "type": "string",
@@ -106,7 +106,7 @@
       "type": "string"
     },
     "proposal_fee": {
-      "type": "decimal"
+      "type": "string"
     },
     "tx_hash_proposal_fee": {
       "type": "string"
@@ -121,7 +121,7 @@
       "type": "string"
     },
     "vote_fee": {
-      "type": "decimal"
+      "type": "string"
     },
     "tx_hash_vote_fee": {
       "type": "string"

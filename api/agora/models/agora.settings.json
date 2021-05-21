@@ -17,8 +17,8 @@
     "ProposalFeeRatio": {
       "type": "decimal",
       "default": 0.01,
-      "max": 0.5,
-      "min": 0
+      "max": 0.9999999,
+      "min": 0.0000001
     },
     "privacyTermUrl": {
       "type": "string"
