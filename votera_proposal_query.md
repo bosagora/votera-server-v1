@@ -159,9 +159,3 @@ proposalId_lte=123123
 proposalId_gt=123123
 proposalId_gte=123123
 
-
-http://localhost:5000/qrcode/login/:index
-http://localhost:5000/qrcode/vote/:index/:height
-
-http://localhost:5000/proposal/fee/:proposalId/:index
-http://localhost:5000/proposal/data/:proposalId/:index

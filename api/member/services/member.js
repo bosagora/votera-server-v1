@@ -199,5 +199,33 @@ module.exports = {
                 throw new Error('invalid parameter');
             }
         }
+    },
+    /**
+     * authorize helper function called by controller
+     * @param {*} memberId 
+     * @param {*} user 
+     * @param {*} ctx 
+     */
+    async authorizeMember(memberId, user, ctx) {
+        if (!memberId) {
+            ctx.badRequest('missing parameter');
+            return null;
+        }
+        if (!user) {
+            ctx.unauthorized('unauthorized');
+            return null;
+        }
+
+        const checkMember = await this.checkMemberUser(memberId, user);
+        if (!checkMember.member) {
+            ctx.badRequest('member.notFound');
+            return null;
+        }
+        if (!checkMember.authorized) {
+            ctx.unauthorized('member.unauthorized');
+            return null;
+        }
+
+        return checkMember;
     }
 };
