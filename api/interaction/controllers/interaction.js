@@ -44,11 +44,9 @@ module.exports = {
         const graphqlApi = !!ctx.request.body.input;
         const { isLike, postId, memberId } = graphqlApi ? ctx.request.body.input : ctx.request.body;
         if (!postId || !memberId) return ctx.badRequest('missing parameter');
-        if (!ctx.state.user) return ctx.unauthorized('unauthorized');
-
-        const checkMember = await strapi.services.member.checkMemberUser(memberId, ctx.state.user);
-        if (!checkMember.member) return ctx.badRequest('member.notFound');
-        if (!checkMember.authorized) return ctx.unauthorized('member.unauthorized');
+        if (! await strapi.services.member.authorizeMember(memberId, ctx.state.user, ctx)) {
+            return;
+        }
 
         const result = await strapi.services.interaction.toggleLike(isLike, postId, memberId, ctx.state.user);
         if (result.interaction) {
@@ -69,11 +67,9 @@ module.exports = {
         const graphqlApi = !!ctx.request.body.input;
         const { postId, activityId, proposalId, actor } = graphqlApi ? ctx.request.body.input : ctx.request.body;
         if (!postId || !activityId || !proposalId || !actor) return ctx.badRequest('missing parameter');
-        if (!ctx.state.user) return ctx.unauthorized('unauthorized');
-
-        const checkMember = await strapi.services.member.checkMemberUser(actor, ctx.state.user);
-        if (!checkMember.member) return ctx.badRequest('member.notFound');
-        if (!checkMember.authorized) return ctx.unauthorized('member.unauthorized');
+        if (! await strapi.services.member.authorizeMember(actor, ctx.state.user, ctx)) {
+            return;
+        }
 
         const result = await strapi.services.interaction.createReportPost(postId, activityId, proposalId, actor, ctx.state.user);
         return graphqlApi ? { interaction: sanitizeEntity(result, { model: strapi.models.interaction }) } : sanitizeEntity(result, { model: strapi.models.interaction });

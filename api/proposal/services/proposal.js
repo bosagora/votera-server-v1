@@ -260,7 +260,7 @@ module.exports = {
         }
 
         const joined = await this.checkJoinMember(proposal.id, member.id);
-        if (!joind) {
+        if (!joined) {
             await strapi.query('member-role').create({
                 type: 'USER',
                 scope: 'PROPOSAL',

@@ -4,7 +4,7 @@
  * Read the documentation (https://strapi.io/documentation/v3.x/concepts/controllers.html#core-controllers)
  * to customize this controller
  */
-const { sanitizeEntity } = require('strapi-utils');
+const { parseMultipartData, sanitizeEntity } = require('strapi-utils');
 
 function sanitizePost(entity) {
     if (entity.status === 'DELETED') {
@@ -33,5 +33,44 @@ module.exports = {
         }
 
         return entities.map(entity => sanitizePost(entity));
+    },
+    async create(ctx) {
+        let post;
+        if (ctx.is('multipart')) {
+            const { data, files } = parseMultipartData(ctx);
+            const { writer } = data ? data : {};
+            if (! await strapi.services.member.authorizeMember(writer, ctx.state.user, ctx)) {
+                return;
+            }
+
+            post = await strapi.services.post.create(data, { files });
+        } else {
+            const { writer } = ctx.request.body;
+            if (! await strapi.services.member.authorizeMember(writer, ctx.state.user, ctx)) {
+                return;
+            }
+
+            post = await strapi.services.post.create(ctx.request.body);
+        }
+        return sanitizePost(post);
+    },
+    async update(ctx) {
+        let post;
+        if (ctx.is('multipart')) {
+            const { data, files } = parseMultipartData(ctx);
+            const { writer } = data ? data : {};
+            if (! await strapi.services.member.authorizeMember(writer, ctx.state.user, ctx)) {
+                return;
+            }
+
+            post = await strapi.services.post.update({ id: ctx.params.id, writer }, data, { files });
+        } else {
+            const { writer } = ctx.request.body;
+            if (! await strapi.services.member.authorizeMember(writer, ctx.state.user, ctx)) {
+                return;
+            }
+            post = await strapi.services.post.update({ id: ctx.params.id, writer }, ctx.request.body);
+        }
+        return sanitizePost(post);
     }
 };

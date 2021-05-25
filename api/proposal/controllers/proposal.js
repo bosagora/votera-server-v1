@@ -34,22 +34,16 @@ module.exports = {
             const { data, files } = parseMultipartData(ctx);
 
             const { creator } = data ? data : {};
-            if (!creator) return ctx.badRequest('missing parameter');
-            if (!ctx.state.user) return ctx.unauthorized('unauthorized');
-
-            const checkMember = await strapi.services.member.checkMemberUser(creator, ctx.state.user);
-            if (!checkMember.member) return ctx.badRequest('member.notFound');
-            if (!checkMember.authorized) return ctx.unauthorized('member.unauthorized');
+            if (! await strapi.services.member.authorizeMember(creator, ctx.state.user, ctx)) {
+                return;
+            }
 
             proposal = await strapi.services.proposal.createProposal(data, { files });
         } else {
-            const { creator } = ctx.request.body;
-            if (!creator) return ctx.badRequest('missing parameter');
-            if (!ctx.state.user) return ctx.unauthorized('unauthorized');
-
-            const checkMember = await strapi.services.member.checkMemberUser(creator, ctx.state.user);
-            if (!checkMember.member) return ctx.badRequest('member.notFound');
-            if (!checkMember.authorized) return ctx.unauthorized('member.unauthorized');
+            const { creator } = ctx.request.body.input ? ctx.request.body.input : ctx.request.body;
+            if (! await strapi.services.member.authorizeMember(creator, ctx.state.user, ctx)) {
+                return;
+            }
 
             proposal = await strapi.services.proposal.createProposal(ctx.request.body);
         }
@@ -66,11 +60,10 @@ module.exports = {
     async join(ctx) {
         const { id, actor } = ctx.request.body.input ? ctx.request.body.input : ctx.request.body;
         if (!id || !actor) return ctx.badRequest('missing parameter');
-        if (!ctx.state.user) return ctx.unauthorized('unauthorized');
-
-        const checkMember = await strapi.services.member.checkMemberUser(actor, ctx.state.user);
-        if (!checkMember.member) return ctx.badRequest('member.notFound');
-        if (!checkMember.authorized) return ctx.unauthorized('member.unauthorized');
+        const checkMember = await strapi.services.member.authorizeMember(actor, ctx.state.user, ctx);
+        if (!checkMember) {
+            return;
+        }
 
         const result = await strapi.services.proposal.joinProposal(id, checkMember.member);
         if (result.proposal) {
