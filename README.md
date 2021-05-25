@@ -1,7 +1,113 @@
+# installation
+
+votera server is using strapi with node server
+it requires version 14 or later.
+
+Required module and package
+1. mongodb : used as database
+2. redis : used for pubsub and redlock
+3. s3 : used as file upload repository
+
+
+configuration location and list 
+
+1. mongodb
+
+config location: config/database.js
+
+reference [strapi database configuration](https://strapi.io/documentation/developer-docs/latest/setup-deployment-guides/configurations.html#database)
+
+- connections List of all available connections.
+  - default
+    - connector (string): Connector used by the current connection. Will be mongoose.
+    - settings Useful for external session stores such as Redis.
+      - client (string): Database client to create the connection. Will be mongo.
+      - host (string): Database host name. Default value: localhost.
+      - port (integer): Database port. Default value: 27017.
+      - database (string): Database name.
+      - username (string): Username used to establish the connection.
+      - password (string): Password used to establish the connection.
+      - uri (string): This can overide all previous configurations - optional
+    - options Options used for database connection.
+      - ssl (boolean): For ssl database connection.
+      - sslCA (string): Pass content (not filepath!) of server's root CA for ssl    connection.
+      - debug (boolean): Show database exchanges and errors.
+      - authenticationDatabase (string): Connect with authentication.
+
+
+
+2. redis (pubsub)
+
+config location : config/pubsub.js
+
+- service
+  - enable : enable/disable pubsub 
+  - endpoint: url of pubsub
+- redis (redis configuration for pubsub feature)
+  - enable : enable/disable redis use for pubsub
+  - options
+    - host : redis host 
+    - port : redis port
+    - username : username for redis connection
+    - password : password for redis connection
+
+3. redis (cron redlock) and others for server
+
+config location:  config/server.js
+
+- host: service ip of strapi server
+- port: listening port of strapi server
+- contact: 
+  - support: support contact information
+- cron: cron configuration
+  - enabled: enable/disable cron service
+  - redis: configuration for cron redlock
+    - enable: enable/disable for redis for cron
+    - options: cron redlock connection information
+      - host : redis host
+      - port : redis port
+      - username : username for redis connection
+      - password : password for redis connection
+  - ttl: ttl (time to live) configuration of redlock
+
+4. s3 (upload configuration)
+
+config location : config/plugins.js
+
+can use other upload provider of strapi
+
+[Strapi upload](https://strapi.io/documentation/developer-docs/latest/development/plugins/upload.html#models-definition)
+
+- upload : Upload plugin configuration
+  - provider : Upload plugin name
+  - providerOptions: 
+    - accessKeyId : S3 Access Key ID
+    - secretAccessKey : S3 Secret Access Key
+    - region : S3 service region
+    - params
+      - Bucket : S3 Service bucket
+
+5. Bosagora configuration
+
+config location: config/boaclient.js
+
+Agora and Sto configuration for Blockchain access
+
+- sto
+  - url : sto server url
+  - port : sto server port
+- agora
+  - url : agora url
+  - port : agora port
+- service
+  - vote_-_payload_size : current payload size for vote
+
 # votera-server
 Votera Server (Using strapi server)
 
+
 ### Method for Authenticated permission
+
 |Plugin|Name|Method|
 |------|----|------|
 |Application|Activity|count, find, findOne, summarize|
@@ -33,7 +139,7 @@ Votera Server (Using strapi server)
 |Users-Permissions|User|me|
 
 
-### Agora 에 저장해야 되는 정보
+### Agora 
 |Field|Description|
 |-----|-----------|
 |PrivacyTermUrl|개인정보보호 약관 URL|
@@ -74,3 +180,28 @@ Votera Server (Using strapi server)
 |STOA_PORT|stoa server port|
 |AGORA_URL|Agora server url|
 |AGORA_PORT|Agora server port|
+
+
+### 수동으로 색인 추가
+
+posts
+{
+    "createdAt": 1
+}
+
+proposals
+{
+    "createdAt": 1
+}
+
+interactions
+{
+    "type": 1,
+    "post": 1,
+    "user": 1
+},
+{
+    "type": 1,
+    "proposal": 1,
+    "user": 1
+}
