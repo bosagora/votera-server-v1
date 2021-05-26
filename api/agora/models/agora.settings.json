@@ -28,6 +28,13 @@
     },
     "voteResultUrl": {
       "type": "string"
+    },
+    "ProposalFundMin": {
+      "type": "string",
+      "default": "1"
+    },
+    "ProposalFundMax": {
+      "type": "string"
     }
   }
 }
