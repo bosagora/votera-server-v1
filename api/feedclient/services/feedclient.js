@@ -1,248 +1,477 @@
-const { ApolloClient } = require('apollo-client');
-const { InMemoryCache } = require('apollo-cache-inmemory');
-const gql = require('graphql-tag');
-const { WebSocketLink } = require('apollo-link-ws');
-const { makeExecutableSchema, PubSub } = require('apollo-server-koa');
-const { execute, subscribe } = require('graphql');
-const { RedisPubSub } = require('graphql-redis-subscriptions');
-const Redis = require('ioredis');
-const { SubscriptionClient, SubscriptionServer } = require('subscriptions-transport-ws');
-const push = require('../../../src/util/push');
+'use strict';
+
 const fcm = require('../../../src/util/fcm');
 
-const ws = require('ws');
-
-const query = gql`
-    subscription {
-        listenFeed {
-            id
-            rejectId
-            target
-            type
-            content {
-                version
-                userName
-                activityName
-                groupName
-                proposalTitle
-                questionTitle
-                comment
-            }
-            navigation {
-                proposalId
-                groupId
-                memberId
-                activityId
-                activityType
-                activityCreatorId
-                postId
-                postCreatorId
-                status
-            }
-            timestamp
-        }
+const selectNewProposalsNews = async (creator, maxUserFeed) => {
+    if (maxUserFeed) {
+        userFeeds = await strapi.query('user-feed').find({
+            newProposalsNews: true,
+            user_ne: creator,
+            id_gt: maxUserFeed,
+            _sort: 'id'
+        });
+    } else {
+        userFeeds = await strapi.query('user-feed').find({
+            newProposalsNews: true,
+            user_ne: creator,
+            _sort: 'id'
+        });
     }
-`;
+    if (!userFeeds || userFeeds.length === 0) {
+        return null;
+    }
 
-/**
- * 발생한 feed payload 를 feedAddress 에 맞춰 저장합니다
- * @param {*} payload
- */
-const savePayload = async (targets, payload) => {
-    console.log('savePayload', targets);
-    const result = await Promise.all(
-        targets.map((target) => {
-            let feedSet = { ...payload, target: target };
-            console.log('feedSet, ', { target: feedSet.target, type: feedSet.type });
-            return strapi.services.feeds.create(feedSet);
-        }),
-    );
+    const lastUserFeed = userFeeds[userFeeds.length - 1].id;
+    if (!lastUserFeed) {
+        return null;
+    }
 
-    return result;
-    // TODO: type 별 target 을 리스트업해 벌크저장 ex> target: feedAddress, ...payload
-};
+    return { lastUserFeed, userFeeds };
+}
 
-/**
- * member feedAddress 가 어떤 target type, id 에 follow 되어있는지 추출합니다.
- * FIXME: payload에 sourceId 를 정하면 해당 작업이 필요없을 것으로 판단됨.
- * @param {*} payload
- */
-const getSource = (payload) => {
-    console.log('🚀 ~ payload', payload)
-    const { type } = payload;
+const selectLikeProposalsNews = async (target, maxFollow) => {
+    let follows;
+    if (maxFollow) {
+        follows = await strapi.query('follow').find({
+            target,
+            isFeedActive: true,
+            type: 'PROPOSAL_JOIN',
+            id_gt: maxFollow,
+            _sort: 'id'
+        });
+    } else {
+        follows = await strapi.query('follow').find({
+            target,
+            isFeedActive: true,
+            type: 'PROPOSAL_JOIN',
+            _sort: 'id'
+        });
+    }
+    if (!follows || follows.length === 0) {
+        return null;
+    }
 
-    let sourceId;
+    const lastFollow = follows[follows.length - 1].id;
+    if (!lastFollow) {
+        return null;
+    }
 
-    switch (type) {
+    const ids = follows
+        .map((follow) => follow.user_feed)
+        .filter((user_feed) => user_feed.likeProposalsNews)
+        .map((user_feed) => user_feed.id);
+    if (!ids || ids.length === 0) {
+        return { lastFollow, userFeeds: null };
+    }
+
+    const userFeeds = await strapi.query('user_feed').find({
+        id_in: ids
+    });
+    if (!userFeeds || userFeeds.length === 0) {
+        return { lastFollow, userFeeds: null };
+    }
+
+    return { lastFollow, userFeeds };
+}
+
+const selectMyProposalsNews = async (target) => {
+    const follows = await strapi.query('follow').find({
+        target,
+        isFeedActive: true,
+        type: 'PROPOSAL_CREATE',
+    });
+    if (!follows || follows.length === 0) {
+        return null;
+    }
+
+    const ids = follows
+        .map((follow) => follow.user_feed)
+        .filter((user_feed) => user_feed.myProposalsNews)
+        .map((user_feed) => user_feed.id);
+    if (!ids || ids.length === 0) {
+        return null;
+    }
+
+    const userFeeds = await strapi.query('user-feed').find({
+        id_in: ids
+    });
+    if (!userFeeds || userFeeds.length === 0) {
+        return null;
+    }
+
+    return userFeeds;
+}
+
+const selectMyCommentsNews = async (target) => {
+    const follows = await strapi.query('follow').find({
+        target,
+        isFeedActive: true,
+        type: 'POST',
+    });
+    if (!follows || follows.length === 0) {
+        return null;
+    }
+
+    const ids = follows
+        .map((follow) => follow.user_feed)
+        .filter((user_feed) => user_feed.myCommentsNews)
+        .map((user_feed) => user_feed.id);
+    if (!ids || ids.length === 0) {
+        return null;
+    }
+
+    const userFeeds = await strapi.query('user-feed').find({
+        id_in: ids
+    });
+    if (!userFeeds || userFeeds.length === 0) {
+        return null;
+    }
+
+    return userFeeds;
+}
+
+function makeFeedsProposal(proposal, type) {
+    return {
+        type,
+        content: {
+            proposalTitle: proposal.name,
+        },
+        navigation: {
+            proposalId: proposal.id,
+        },
+        isRead: false,
+    };
+}
+
+function makePayloadProposal(proposal, type) {
+    let en_title, en_body, ko_title, ko_body;
+
+    switch(type) {
         case 'NEW_PROPOSAL':
-        case 'VOTING_START':
-        case 'VOTING_CLOSED':
-            sourceId = payload.navigation.memberId;
+            ko_title = '새로운 제안이 만들어졌어요!';
+            ko_body = `${proposal.name} 이 등록되었으니 확인해 보세요.`;
+            en_title = 'New proposal';
+            en_body = `${proposal.name} has enrolled. Please check it out!`;
+            break;
+        case 'ASSESS_PENDING':
+            ko_title = '제안수수료 입금 안내';
+            ko_body = `${proposal.name} 의 사전 평가를 시작하시려면 제안수수료를 24시간 내에 입금해 주시기 바랍니다.`;
+            en_title = 'Proposal fee deposit required';
+            en_body = `Please deposit proposal fee of ${proposal.name}. 24 hours left to begin assessment of proposal feasibility`;
             break;
         case 'ASSESS_24HR_DEADLINE':
+            ko_title = '사전 평가 종료 전 24시간';
+            ko_body = `${proposal.name} 의 사전 평가 종료까지 24시간 남았습니다! 종료전 참여해보세요.`;
+            en_title = '24 hours left to assess proposal feasibility';
+            en_body = `24 hours left to access ${proposal.name}'s feasibility assessment! Please join in before it ends.`;
+            break;
         case 'ASSESS_CLOSED':
+            ko_title = '사전평가 종료';
+            ko_body = `${proposal.name} 사전평가가 종료되었습니다. 평가 결과를 확인해보세요.`;
+            en_title = 'feasibility assessment closed';
+            en_body = `${proposal.name}'s feasibility assessment has closed. Please check out the results.`;
+            break;
+        case 'VOTING_START':
+            ko_title = '투표 시작';
+            ko_body = `${proposal.name} 의 투표가 시작되었으니 투표에 참여해보세요.`;
+            en_title = 'vote opening';
+            en_body = `${proposal.name}'s voting is jsut started! Please join in :)`;
+            break;
+        case 'VOTING_PENDING':
+            ko_title = '투표비 입금 안내';
+            ko_body = `${proposal.name} 의 투표를 시작하시면 투표비를 24시간 내에 입금해 주시기 바랍니다.`;
+            en_title = 'Vote fee deposit required';
+            en_body = `Please deposit vote fee of ${proposal.name}. 24 hours left to begin vote`;
+            break;
         case 'VOTING_24HR_DEADLINE':
+            ko_title = '투표 종료 전 24시간';
+            ko_body = `${proposal.name} 의 투표 종료까지 24시간 남았습니다. 놓치치 말고 투표하세요.`;
+            en_title = '24 hours left to vote';
+            en_body = `24 hours left to access ${proposal.name}'s voting! Please don't miss out on your vote.`;
+            break;
+        case 'VOTING_CLOSED':
+            ko_title = '투표 종료';
+            ko_body = `${proposal.name} 투표가 종료되었습니다. 결과를 확인해보세요.`;
+            en_title = 'Vote closed';
+            en_body = `${proposal.name}'s voting has ended. Please check out the results.`;
             break;
         case 'NEW_PROPOSAL_NOTICE':
-            sourceId = payload.navigation.proposalId;
-            break;
-        case 'NEW_OPINION_COMMENT':
-        case 'NEW_OPINION_LIKE':
-            sourceId = payload.navigation.postCreatorId;
+            ko_title = '제안 공지 등록';
+            ko_body = `${proposal.name} 에 새로운 공지가 등록되었습니다. 확인해보세요.`;
+            en_title = 'New proposal notice';
+            en_body = `${proposal.name}' new notice has posted. Please check it out!`;
             break;
         default:
+            return null;
+    }
+    return {
+        payload_en: {
+            title: en_title,
+            body: en_body,
+        },
+        payload_ko: {
+            title: ko_title,
+            body: ko_body,
+        },
+    }
+}
+
+function makeFeedsComment(activity, memberName, type) {
+    return {
+        type,
+        content: {
+            userName: memberName,
+        },
+        navigation: {
+            activityId: activity,
+        },
+        isRead: false,
+    }
+}
+
+function makePayloadComment(activity, memberName, type) {
+    let en_title, en_body, ko_title, ko_body;
+    switch(type) {
+        case 'NEW_OPINION_COMMENT':
+            ko_title = '의견에 답글 달림';
+            ko_body = `${memberName} 님이 당신의 의견에 댓글을 남겼습니다.`;
+            en_title = 'New comment';
+            en_body = `${memberName} commented on your opinion.`;
             break;
+        case 'NEW_OPINION_LIKE':
+            ko_title = '좋아요 받음';
+            ko_body = `${memberName} 님이 당신의 의견을 추천했습니다.`;
+            en_title = 'New like';
+            en_body = `${memberName} recommended your opinion.`;
+            break;
+        default :
+            return null;
     }
 
-    console.log('🚀 ~ sourceId', sourceId)
-    return sourceId;
-};
-
-/**
- * 각 feedAddress 에 payload 를 publish 합니다
- * @param {*} payload
- */
-const publishNotification = async (savedFeedData, targets, pushTokens, payload) => {
-    // TODO: savePayload에서 만들어진 feedAddress 목록을 사용하여 payload publish
-
-    // loop publish 동시
-    if (pushTokens.length > 0) {
-        const messages = await fcm.setMulticastMessages(payload, pushTokens);
-        Promise.all(
-            messages.map((message) => {
-                return fcm.sendToDevices(message);
-            }),
-        );
+    return {
+        payload_en: {
+            title: en_title,
+            body: en_body,
+        },
+        payload_ko: {
+            title: ko_title,
+            body: ko_body,
+        },
     }
-    savedFeedData.forEach((data) => {
-        strapi.services.feedclient.publish(data.target, { listenNotifications: data });
+}
+
+const saveFeeds = async (userFeeds, feed) => {
+    const targets = userFeeds.map((userFeed) => {
+        return { ...feed, target: userFeed.user.user_feed };
     });
-    // targets.forEach(target => {
-    //     strapi.services.feedclient.publish(target, { listenNotifications: payload });
-    // })
+    Promise.all(targets.map(target => strapi.query('feeds').create(target)));
+    /*
+    await strapi.query('feeds').model.insertMany(targets, function(error, docs) {
+        if (error) {
+            strapi.log.warn({error}, 'saveFeeds exception');
+        }
+    });
+    */
 };
 
-/**
- * feed가 생성될 사용자의 목록을 가져옵니다.
- * @param {*} payload
- */
-const getTargets = async (payload) => {
-    const sourceId = getSource(payload);
-    let follows
-    if (sourceId === null || sourceId === undefined || sourceId === '') {
-        follows = [];
-    } else {
-        follows = await strapi.services.follow.find({ target: sourceId, isFeedActive: true });
+const sendNotification = (userFeeds, payload_ko, payload_en) => {
+    const pushes_en = userFeeds
+        .filter((userFeed) => !userFeed.locale || userFeed.locale.indexOf('ko') === -1)
+        .map((userFeed) => userFeed.pushes.filter((push) => push.isActive))
+        .flat();
+    if (pushes_en && pushes_en.length > 0) {
+        const message_en = {...payload_en, tokens: pushes_en.map((push) => push.token)};
+        fcm.sendToDevices(message_en)
+            .catch((err) => {
+                strapi.log.warn({err}, 'fcm.sendToDevices exception');
+            });
     }
-    // const feedMembers = follows.map(follow => {
-    //     return follow.member;
-    // });
-    let obj = {
-        members: [],
-        pushTokens: [],
-    };
-    const addressPair = follows.reduce((acc, cur) => {
-        acc.members.push(cur.member);
-        if (cur?.isActive && cur?.push?.token) acc.pushTokens.push(cur?.push?.token);
-        return acc;
-    }, obj);
 
-    const feedMembers = addressPair.members;
-    const pushTokens = addressPair?.pushTokens;
-
-    const targets = feedMembers;
-    return { targets, pushTokens };
+    const pushes_ko = userFeeds
+        .filter((userFeed) => userFeed.locale && userFeed.locale.indexOf('ko') !== -1)
+        .map((userFeed) => userFeed.pushes.filter((push) => push.isActive))
+        .flat();
+    if (pushes_ko && pushes_ko.length > 0) {
+        const message_ko = {...payload_ko, tokens: pushes_ko.map((push) => push.token)};
+        fcm.sendToDevices(message_ko)
+            .catch((err) => {
+                strapi.log.warn({err}, 'fcm.sendToDevices exception');
+            });
+    }
 };
 
-const feedManage = async (payload) => {
-    const addressPair = await getTargets(payload);
-    const targets = addressPair.targets;
-    const pushTokens = addressPair?.pushTokens;
+const processNewProposal = async (proposal, type) => {
+    const feed = makeFeedsProposal(proposal, type);
+    if (!feed) {
+        return;
+    }
+    const payloads = makePayloadProposal(proposal, type);
+    if (!payloads) {
+        return;
+    }
 
-    const result = await savePayload(targets, payload);
-    publishNotification(result, targets, pushTokens, payload);
+    const creatorId = proposal.creator.user;
+
+    let userList = await selectNewProposalsNews(creatorId);
+    while (userList) {
+        if (userList.userFeeds) {
+            await saveFeeds(userList.userFeeds, feed);
+            sendNotification(userList.userFeeds, payloads.payload_ko, payloads.payload_en);
+        }
+
+        userList = await selectNewProposalsNews(creatorId, userList.maxUserFeed);
+    }
+};
+
+const processProposal = async (proposal, type, myProcess, likeProcess) => {
+    const feed = makeFeedsProposal(proposal, type);
+    if (!feed) {
+        return;
+    }
+    const payloads = makePayloadProposal(proposal, type);
+    if (!payloads) {
+        return;
+    }
+
+    if (myProcess) {
+        const userFeeds = await selectMyProposalsNews(proposal.id);
+        if (userFeeds) {
+            await saveFeeds(userFeeds, feed);
+            sendNotification(userFeeds, payloads.payload_ko, payloads.payload_en);
+        }
+    }
+    if (likeProcess) {
+        let userList = await selectLikeProposalsNews(proposal.id);
+        while (userList) {
+            if (userList.userFeeds) {
+                await saveFeeds(userList.userFeeds, feed);
+                sendNotification(userList.userFeeds, payloads.payload_ko, payloads.payload_en);
+            }
+
+            userList = await selectLikeProposalsNews(proposal.id, userList.lastFollow);
+        }
+    }
+};
+
+const processComment = async (target, activity, memberName, type) => {
+
+    const feed = makeFeedsComment(activity, memberName, type);
+    if (!feed) {
+        return;
+    }
+    const payloads = makePayloadComment(activity, memberName, type);
+    if (!payloads) {
+        return;
+    }
+
+    const userFeeds = await selectMyCommentsNews(target);
+    if (!userFeeds) {
+        return;
+    }
+
+    await saveFeeds(userFeeds, feed);
+    sendNotification(userFeeds, payloads.payload_ko, payloads.payload_en);
 };
 
 module.exports = {
-    /**
-     * FeedManager Server Client
-     * Subscribe to Strapi API Server (http://localhost:1337/subscriptions)
-     */
-    initialize: async () => {
-        if (!strapi.config.feedclient.service.enable) {
-            return;
-        }
-        console.log('🚀  Start Feed Manager');
-
-        // TODO: change pubsub to other engine
-        if (strapi.config.feedclient?.redis?.enable &&
-            strapi.config.feedclient?.redis?.options) {
-            const options = {
-                ...strapi.config.feedclient.redis.options,
-                retryStrategy: (times) => {
-                    // reconnect after
-                    return Math.min(times * 50, 2000);
-                },
-            };
-            this.feed_pubsub = new RedisPubSub({
-                publisher: new Redis(options),
-                subscriber: new Redis(options),
-            });
-        } else {
-            this.feed_pubsub = new PubSub();
+    async onProposalCreated(proposal) {
+        console.log('feedclient.onProposalCreated proposal = ', proposal);
+        // proposal.creator.user : creator user id
+        const type = 'NEW_PROPOSAL';
+        // newProposalsNews: true
+        await processNewProposal(proposal, type);
+    },
+    async onProposalUpdated(proposal) {
+        console.log('feedclient.onProposalUpdated proposal=', proposal);
+        let type;
+        // myProposalsNews: true
+        // likeProposalsNews: true
+        switch (proposal.status) {
+            case 'PENDING_VOTE': // 사전평가 종료
+                type = 'ASSESS_CLOSED';
+                break;
+            case 'VOTE':
+                type = 'VOTING_START';
+                break;
+            case 'CLOSED':
+                type = 'VOTING_CLOSED';
+                break;
+            default:
+                return;
         }
 
-        const schema = makeExecutableSchema({
-            typeDefs: strapi.api.feedclient.config.typeDefs,
-            resolvers: strapi.api.feedclient.config.resolver,
-        });
+        await processProposal(proposal, type, true, true);
+    },
+    async onProposalTimeAlarm(proposal) {
+        console.log('feedclient.onProposalUpdated proposal=', proposal);
+        let type;
+        let likeProposalsNews = false
+        switch (proposal.status) {
+            case 'PENDING_ASSESS':
+                type = 'ASSESS_PENDING';
+                break;
+            case 'ASSESS':
+                type = 'ASSESS_24HR_DEADLINE';
+                likeProposalsNews = true;
+                break;
+            case 'PENDING_VOTE':
+                type = 'VOTING_PENDING';
+                break;
+            case 'VOTE':
+                type = 'VOTING_24HR_DEADLINE';
+                likeProposalsNews = true;
+                break;
+            default:
+                return;
+        }
 
-        const server = new SubscriptionServer(
-            {
-                execute,
-                subscribe,
-                schema,
-            },
-            {
-                server: strapi.server,
-                path: strapi.config.feedclient.service.endpoint,
-            },
+        await processProposal(proposal, type, true, likeProposalsNews);
+    },
+    async onPostCreated(post) {
+        let type;
+        let proposal;
+        switch (post.type) {
+            case 'BOARD_ARTICLE':
+                type = 'NEW_PROPOSAL_NOTICE';
+                // likeProposalsNews: true
+                proposal = await strapi.query('proposal').findOne({id: post.activity.proposal});
+                break;
+            case 'COMMENT_ON_POST':
+                type = 'NEW_OPINION_COMMENT';
+                // myCommentsNews: true
+                break;
+            default:
+                return;
+        }
+
+        if (type === 'NEW_OPINION_COMMENT') {
+            await processComment(
+                post.id,
+                post.activity.id,
+                post.writer.username,
+                type
+            );
+        } else if (type === 'NEW_PROPOSAL_NOTICE') {
+            await processProposal(proposal, type, false, true);
+        }
+    },
+    async onInteractionCreated(interaction) {
+        console.log('feedclient.onInteractionCreated interaction=', interaction);
+        let type;
+        switch (interaction.type) {
+            case 'LIKE_POST':
+                type = 'NEW_OPINION_LIKE';
+                // myCommentsNews: true
+                break;
+            default:
+                return;
+        }
+
+        await processComment(
+            interaction.post.id,
+            interaction.post.activity,
+            interaction.actor.username,
+            type
         );
-        /** feed client  */
-        const link = new WebSocketLink(
-            new SubscriptionClient(strapi.config.feedclient.service.pubsub_url, { reconnect: true }, ws),
-        );
-        const client = new ApolloClient({
-            link: link,
-            cache: new InMemoryCache(),
-        });
-
-        this.feedClient = client.subscribe({
-            query: query,
-        });
-
-        this.subscribe = this.feedClient.subscribe({
-            next: async (data) => {
-                const payload = data.data.listenFeed;
-                console.log('received payload', payload);
-                feedManage(payload);
-            },
-        });
-    },
-
-    publish: (triggerName, payload) => {
-        return this.feed_pubsub.publish(triggerName, payload);
-    },
-
-    subscribe: (triggerName, onMessage) => {
-        return this.feed_pubsub.subscribe(triggerName, onMessage);
-    },
-
-    unsubscribe: (subId) => {
-        return this.feed_pubsub.unsubscribe(subId);
-    },
-
-    asyncIterator: (triggers) => {
-        return this.feed_pubsub.asyncIterator(triggers);
-    },
+    }
 };

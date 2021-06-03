@@ -136,6 +136,10 @@
       "type": "integer",
       "default": 0,
       "required": true
+    },
+    "timeAlarm_notified": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

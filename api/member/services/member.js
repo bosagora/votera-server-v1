@@ -1,7 +1,5 @@
 'use strict';
 const crypto = require('crypto');
-const boasdk = require('boa-sdk-ts');
-const { exists } = require('fs');
 
 const formatError = (error) => [{ messages: [{ id: error.id, message: error.message, field: error.field }] }];
 
@@ -103,12 +101,12 @@ module.exports = {
      * @param {*} voterCard 
      * @returns 
      */
-    async createValidatorUser(username, password, nodeName, voterCard) {
+    async createValidatorUser(username, password, nodeName, voterCard, pushToken, locale) {
         const voter_card = await this.getVoterCardFromInput(voterCard);
         const existMember = await this.checkExistVoterCard(voter_card);
 
         const randEmail = await this.findUniqueUserEmail();
-        const result = await this.createUser(username, randEmail, password);
+        const createResult = await this.createUser(username, randEmail, password);
 
         if (existMember) {
             await strapi.services.member.update({
@@ -116,23 +114,49 @@ module.exports = {
             }, {
                 username: nodeName,
                 lastAccessTime: new Date(),
-                user: result.user.id,
+                user: createResult.user.id,
                 voterCard,
                 status: 'OPEN'
             });
         } else {
-            const member = await strapi.services.member.create({
+            await strapi.services.member.create({
                 username: nodeName,
                 address: voter_card.validator_address.toString(),
                 lastAccessTime: new Date(),
-                user: result.user.id,
+                user: createResult.user.id,
                 voterCard,
                 status: 'OPEN'
             });
         }
 
-        await strapi.plugins['users-permissions'].services.user.edit({ id: result.user.id }, { confirmed: true });
-        return await strapi.query('user', 'users-permissions').findOne({ id: result.user.id })
+        let push = null;
+
+        if (locale || pushToken) {
+            const userFeed = {
+                user: createResult.user.id
+            };
+            if (locale) {
+                userFeed.locale = locale;
+            }
+            if (pushToken) {
+                push = await strapi.query('push').findOne({ token: pushToken });
+                if (push) {
+                    userFeed.pushes = [push.id];
+                } else {
+                    push = await strapi.query('push').create({ token: pushToken, isActive: true });
+                    if (push) {
+                        userFeed.pushes = [push.id];
+                    }
+                }
+            }
+            await strapi.query('user-feed').create(userFeed);
+        }
+
+        const user = await strapi.plugins['users-permissions'].services.user.edit(
+            { id: createResult.user.id },
+            { confirmed: true }
+        );
+        return { user, push };
     },
     /**
      * check existence of voter card and recover user
@@ -140,7 +164,7 @@ module.exports = {
      * @param {*} voterCard 
      * @returns 
      */
-    async recoverValidatorUser(password, voterCard) {
+    async recoverValidatorUser(password, voterCard, pushToken, locale) {
         const voter_card = await this.getVoterCardFromInput(voterCard);
         const member = await this.checkExistVoterCard(voter_card);
         if (!member || member.status === 'DELETED') {
@@ -149,13 +173,67 @@ module.exports = {
             throw new Error('not found user');
         }
 
-        const user = await strapi.query('user', 'users-permissions').findOne({ id: member.user.id });
+        let user = await strapi.query('user', 'users-permissions').findOne({ id: member.user.id });
         if (!user) {
             throw new Error('not found user');
         }
 
-        await strapi.plugins['users-permissions'].services.user.edit({ id: user.id }, { password });
-        return await strapi.query('user', 'users-permissions').findOne({ id: user.id });
+        let push = null;
+
+        if (locale || pushToken) {
+            let userFeed;
+            let userFeedId;
+            let userFeedPushes;
+            if (user.user_feed) {
+                userFeedId = user.user_feed.id;
+                const foundUserFeed = await strapi.query('user-feed').findOne({ id: userFeedId });
+                if (!foundUserFeed) {
+                    userFeedId = undefined;
+                    userFeed = {
+                        user: user.id
+                    };
+                    userFeedPushes = [];
+                } else {
+                    userFeed = {}
+                    userFeedPushes = foundUserFeed.pushes ? foundUserFeed.pushes.map((push) => push.id) : [];
+                }
+            } else {
+                userFeed = {
+                    user: user.id
+                };
+                userFeedPushes = [];
+            }
+            if (locale) {
+                userFeed.locale = locale;
+            }
+            if (pushToken) {
+                push = await strapi.query('push').findOne({ token: pushToken });
+                if (push) {
+                    if (!push.user_feed?.id || push.user_feed.id !== userFeedId) {
+                        userFeed.pushes = [...userFeedPushes, push.id];
+                    }
+                } else {
+                    push = await strapi.query('push').create({ token: pushToken, isActive: true });
+                    if (push) {
+                        userFeed.pushes = [...userFeedPushes, push.id];
+                    }
+                }
+            }
+            if (userFeedId) {
+                await strapi.query('user-feed').update(
+                    { id: userFeedId },
+                    userFeed,
+                );
+            } else {
+                await strapi.query('user-feed').create(userFeed);
+            }
+        }
+
+        user = await strapi.plugins['users-permissions'].services.user.edit(
+            { id: user.id },
+            { password }
+        );
+        return { user, push };
     },
     async checkDupUserName(username) {
         const user = await strapi.query('user', 'users-permissions').findOne({ username });
@@ -207,24 +285,12 @@ module.exports = {
      * @param {*} ctx 
      */
     async authorizeMember(memberId, user, ctx) {
-        if (!memberId) {
-            ctx.badRequest('missing parameter');
-            return null;
-        }
-        if (!user) {
-            ctx.unauthorized('unauthorized');
-            return null;
-        }
+        if (!memberId) return ctx.throw(400, 'missing parameter');
+        if (!user) return ctx.throw(403, 'unauthorized');
 
         const checkMember = await this.checkMemberUser(memberId, user);
-        if (!checkMember.member) {
-            ctx.badRequest('member.notFound');
-            return null;
-        }
-        if (!checkMember.authorized) {
-            ctx.unauthorized('member.unauthorized');
-            return null;
-        }
+        if (!checkMember.member) return ctx.throw(400, 'member.notFound');
+        if (!checkMember.authorized) return ctx.throw(403, 'member.unauthorized');
 
         return checkMember;
     }

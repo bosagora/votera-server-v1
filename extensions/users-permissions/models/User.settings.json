@@ -62,6 +62,10 @@
     "members": {
       "via": "user",
       "collection": "member"
+    },
+    "user_feed": {
+      "via": "user",
+      "model": "user-feed"
     }
   }
 }

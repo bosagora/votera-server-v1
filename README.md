@@ -113,16 +113,15 @@ Votera Server (Using strapi server)
 |Application|Activity|count, find, findOne, summarize|
 |Application|Agora|find|
 |Application|Feeds|count, find, findone, update|
-|Application|Follow|count, create, createfollow, find, findone, togglefollowall, updatetargetsfollow|
-|Application|Interaction|count, create, find, findone, readinteraction, reportedposts, reportpost, |Applicationtogglelike, update|
+|Application|Interaction|reportedposts, reportpost, togglelike|
 |Application|Member|all|
-|Application|MemberRole|count, find, findone, leaveproposal|
-|Application|Post|all|
-|Application|Proposal|count, create, find, findbyid, findone, join, update|
-|Application|Push|create, update|
+|Application|MemberRole|count, find, findone|
+|Application|Post|count, create, find, findone, listposts, update|
+|Application|Proposal|count, create, find, findbyid, findone, join|
 |Application|Version|find|
 |Upload|Upload|upload|
-|Users-Permissions|User|me,update|
+|Users-Permissions|Auth|connect|
+|Users-Permissions|User|me,updatepassword, updateuseralarmstatus, updateuserpushtoken|
 
 
 ### method for Public permission
@@ -130,10 +129,11 @@ Votera Server (Using strapi server)
 |------|----|------|
 |Application|Activity|count, find, findone, summarize|
 |Application|Agora|find|
-|Application|Interaction|count, find, findone|
+|Application|Interaction|reportedposts|
 |Application|Member|checkdupusername, count, createvalidatoruser, find, findone, recovervalidatoruser|
 |Application|MemberRole|count, find, findone|
 |Application|Post|count, find, findone|
+|Application|Proposal|count, find, findbyid, findone|
 |Application|Version|find|
 |Users-Permissions|Auth|callback, connect, emailconfirmation, forgotpassword, register, resetpassword|
 |Users-Permissions|User|me|

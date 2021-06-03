@@ -44,9 +44,12 @@ module.exports = {
             status: ENUM_FEE_STATUS
             proposal: Proposal
         }
-        input joinProposalInput {
+        input joinProposalInputData {
             id: ID!
             actor: ID!
+        }
+        input joinProposalInput {
+            data: joinProposalInputData
         }
         type JoinProposalPayload {
             invalidVoterCard: Boolean
@@ -65,7 +68,7 @@ module.exports = {
         Query: {
             proposalFee: {
                 description: 'Get Proposal Fee',
-                resolverOf: 'application::proposal.proposal.update',
+                resolverOf: 'application::proposal.proposal.findOne',
                 resolver: async (obj, options, ctx) => {
                     const { id } = options;
                     const result = await strapi.services.proposal.proposalFee(id);
@@ -74,7 +77,7 @@ module.exports = {
             },
             voteFee: {
                 description: 'Get Vote Fee',
-                resolverOf: 'application::proposal.proposal.update',
+                resolverOf: 'application::proposal.proposal.findOne',
                 resolver: async (obj, options, ctx) => {
                     const { id } = options;
                     const result = await strapi.services.proposal.voteFee(id);
@@ -83,14 +86,7 @@ module.exports = {
             },
             proposalById: {
                 description: 'Get a Proposal by proposalId',
-                resolverOf: 'application::proposal.proposal.findById',
-                resolver: async (obj, options, ctx) => {
-                    const { proposalId } = options;
-                    const proposal = await strapi.services.proposal.findOne({
-                        proposalId
-                    });
-                    return proposal;
-                }
+                resolver: 'application::proposal.proposal.findById',
             },
         },
         Mutation: {
@@ -98,31 +94,12 @@ module.exports = {
                 description: 'Create a new Proposal',
                 resolverOf: 'application::proposal.proposal.create',
                 resolver: async (obj, options, { context }) => {
-                    const { input } = options;
-
-                    const { creator } = input.data ? input.data : {};
-                    if (!creator) throw new Error('missing parameter');
-                    if (!context.state.user) return new Error('unauthorized');
-
-                    const checkMember = await strapi.services.member.checkMemberUser(creator, context.state.user);
-                    if (!checkMember.member) throw new Error('member.notFound');
-                    if (!checkMember.authorized) throw new Error('member.unauthorized');
-
-                    const proposal = await strapi.services.proposal.createProposal(input.data);
-                    const payload = await strapi.services.notification.getNotificationPayload({
-                        ...proposal,
-                        type: 'NEW_PROPOSAL',
-                        rejectId: proposal.creator?.id,
-                        // TODO: rejectId: result.creator.id, 생성자 멤버아이디가 오며, 해당 아이디를 클라이언트에서 확인.
-                    });
-                    strapi.services.pubsub.publish('feed', payload.body);
-
-                    return { proposal: sanitizeEntity(proposal, { model: strapi.models.proposal }) };
+                    const proposal = await strapi.controllers.proposal.create(context);
+                    return { proposal };
                 }
             },
             joinProposal: {
                 description: 'Join Proposal',
-                resolverOf: 'application::proposal.proposal.join',
                 resolver: 'application::proposal.proposal.join'
             }
         },

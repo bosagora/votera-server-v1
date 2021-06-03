@@ -1,6 +1,5 @@
 'use strict';
 
-const createNickname = require('../../../src/util/nickname/nickname');
 const { parseMultipartData, sanitizeEntity } = require('strapi-utils');
 /**
  * Read the documentation (https://strapi.io/documentation/v3.x/concepts/controllers.html#core-controllers)

@@ -13,6 +13,5 @@
 module.exports = async () => {
     await strapi.services.boaclient.initialize();
     await strapi.services.pubsub.initialize();
-    await strapi.services.feedclient.initialize();
     await strapi.services.cronjob.initialize();
 };

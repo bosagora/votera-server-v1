@@ -1,0 +1,52 @@
+{
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/user-feeds",
+      "handler": "user-feed.find",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/user-feeds/count",
+      "handler": "user-feed.count",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/user-feeds/:id",
+      "handler": "user-feed.findOne",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/user-feeds",
+      "handler": "user-feed.create",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/user-feeds/:id",
+      "handler": "user-feed.update",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/user-feeds/:id",
+      "handler": "user-feed.delete",
+      "config": {
+        "policies": []
+      }
+    }
+  ]
+}

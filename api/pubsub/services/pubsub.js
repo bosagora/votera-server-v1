@@ -31,15 +31,44 @@ module.exports = {
             this.pubsub = new PubSub();
         }
 
+        const pubsubConfig = strapi.api.pubsub.config;
+        const typeDefs = `
+            ${pubsubConfig.definition}
+            type Query {
+                ${pubsubConfig.query}
+            }
+            type Subscription {
+                ${pubsubConfig.subscription}
+            }
+        `;
+
         const schema = makeExecutableSchema({
-            typeDefs: strapi.api.pubsub.config.typeDefs,
-            resolvers: strapi.api.pubsub.config.resolver
+            typeDefs,
+            resolvers: pubsubConfig.resolver
         });
 
         const server = new SubscriptionServer({
             execute,
             subscribe,
-            schema
+            schema,
+            onConnect: (connectionParams, webSocket, context) => {
+                if (connectionParams.authToken) {
+                    return strapi.plugins['users-permissions'].services.jwt.verify(connectionParams.authToken)
+                        .then((data) => {
+                            return strapi.plugins[
+                                'users-permissions'
+                              ].services.user.fetchAuthenticatedUser(data.id);
+                        })
+                        .then(user => {
+                            return { currentUser: user };
+                        })
+                        .catch((err) => {
+                            throw err;
+                        });
+                }
+
+                throw new Error('missing auth token');
+            },
         }, {
             server: strapi.server,
             path: strapi.config.pubsub.service.endpoint
@@ -47,8 +76,8 @@ module.exports = {
     },
 
     publish: (triggerName, payload) => {
-        strapi.log.debug({trigger: triggerName, payload: payload}, 'PubSub.publish, to', triggerName);
-        console.log(`publish trigger=${triggerName}  payload=${JSON.stringify(payload)}`);
+        // strapi.log.debug({trigger: triggerName, payload: payload}, 'PubSub.publish, to', triggerName);
+        // console.log(`publish trigger=${triggerName}  payload=${JSON.stringify(payload)}`);
         return this.pubsub ? this.pubsub.publish(triggerName, payload) : undefined;
     },
 
@@ -61,7 +90,7 @@ module.exports = {
     },
 
     asyncIterator: (triggers) => {
-        strapi.log.debug({trigger: triggers}, 'PubSub.asyncIterator listen by', triggers);
+        // strapi.log.debug({trigger: triggers}, 'PubSub.asyncIterator listen by', triggers);
         return this.pubsub ? this.pubsub.asyncIterator(triggers) : undefined;
     }
 };

@@ -24,10 +24,10 @@
       "type": "datetime"
     },
     "user": {
-      "plugin": "users-permissions",
-      "model": "user",
       "via": "members",
-      "private": true
+      "plugin": "users-permissions",
+      "private": true,
+      "model": "user"
     },
     "voterCard": {
       "type": "string",

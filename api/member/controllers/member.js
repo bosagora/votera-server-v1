@@ -1,4 +1,5 @@
 'use strict';
+
 const { parseMultipartData, sanitizeEntity } = require('strapi-utils');
 
 /**
@@ -8,38 +9,44 @@ const { parseMultipartData, sanitizeEntity } = require('strapi-utils');
 
 module.exports = {
     async createValidatorUser(ctx) {
-        try {
-            const { username, password, nodeName, voterCard } = ctx.request.body.input;
-            if (!username) return ctx.badRequest('missing parameter');
-            if (!password) return ctx.badRequest('missing parameter');
-            if (!nodeName) return ctx.badRequest('missing parameter');
-            if (!voterCard) return ctx.badRequest('missing parameter');
+        const { username, password, nodeName, voterCard, pushToken, locale } = ctx.request.body;
+        if (!username || !password || !nodeName || !voterCard) return ctx.throw(400, 'missing parameter');
 
-            return await strapi.services.member.createValidatorUser(username, password, nodeName, voterCard);
-        } catch (error) {
-            ctx.badRequest('server internal error');
+        const result = await strapi.services.member.createValidatorUser(
+            username,
+            password,
+            nodeName,
+            voterCard,
+            pushToken,
+            locale
+        );
+        if (result) {
+            result.user = sanitizeEntity(result.user, { model: strapi.query('user', 'users-permissions').model });
+            result.push = sanitizeEntity(result.push, { model: strapi.models.push });
         }
+        return result;
     },
     async recoverValidatorUser(ctx) {
-        try {
-            const { password, voterCard } = ctx.request.body.input;
-            if (!password) return ctx.badRequest('missing parameter');
-            if (!voterCard) return ctx.badRequest('missing parameter');
+        const { password, voterCard, pushToken, locale } = ctx.request.body;
+        if (!password || !voterCard) return ctx.throw(400, 'missing parameter');
 
-            return await strapi.services.member.recoverValidatorUser(password, voterCard);
-        } catch (error) {
-            ctx.badRequest('server internal serror');
+        const result = await strapi.services.member.recoverValidatorUser(
+            password,
+            voterCard,
+            pushToken,
+            locale
+        );
+        if (result) {
+            result.user = sanitizeEntity(result.user, { model: strapi.query('user', 'users-permissions').model });
+            result.push = sanitizeEntity(result.push, { model: strapi.models.push });
         }
+        return result;
     },
     async checkDupUserName(ctx) {
-        try {
-            const { username } = ctx.request.body;
-            if (!username) return ctx.badRequest('missing parameter');
-            const result = await strapi.services.member.checkDupUserName(username);
-            return result;
-        } catch (error) {
-            ctx.badRequest('server internal error');
-        }
+        const { username } = ctx.request.body;
+        if (!username) return ctx.throw(400, 'missing parameter');
+        const result = await strapi.services.member.checkDupUserName(username);
+        return result;
     },
     /**
      * Retrieve records.
@@ -96,7 +103,7 @@ module.exports = {
 
             const voter_card = await strapi.services.member.getVoterCardFromInput(data.voterCard);
             if (data.address !== voter_card.validator_address.toString()) {
-                return ctx.badRequest('invalid validator address');
+                return ctx.throw(400, 'invalid validator address');
             }
             const exist_member = await strapi.services.member.checkExistVoterCard(voter_card);
             if (exist_member) {
@@ -112,7 +119,7 @@ module.exports = {
 
             const voter_card = await strapi.services.member.getVoterCardFromInput(data.voterCard);
             if (data.address !== voter_card.validator_address.toString()) {
-                return ctx.badRequest('invalid validator address');
+                return ctx.throw(400, 'invalid validator address');
             }
             const exist_member = await strapi.services.member.checkExistVoterCard(voter_card);
             if (exist_member) {
@@ -131,11 +138,8 @@ module.exports = {
      */
     async update(ctx) {
         const { member, authorized } = await strapi.services.member.checkMemberUser(ctx.params.id, ctx.state.user);
-        if (!member) {
-            throw new Error('entry.notFound');
-        } else if (!authorized) {
-            throw new Error('Not authorized');
-        }
+        if (!member) return ctx.throw(404, 'entry.notFound');
+        if (!authorized) return ctx.throw(403, 'not authorized');
 
         let entity;
         if (ctx.is('multipart')) {
@@ -157,20 +161,15 @@ module.exports = {
      */
     async delete(ctx) {
         const { member, authorized } = await strapi.services.member.checkMemberUser(ctx.params.id, ctx.state.user);
-        if (!member) {
-            throw new Error('entry.notFound');
-        } else if (!authorized) {
-            throw new Error('Not Authorized');
-        }
+        if (!member) return ctx.throw(404, 'entry.notFound');
+        if (!authorized) return ctx.throw(403, 'not authorized');
 
         const entity = await strapi.services.member.update({ id: ctx.params.id }, { status: 'DELETED' });
         return sanitizeEntity(entity, { model: strapi.models.member });
     },
     async myMembers(ctx) {
         const user = ctx.state.user;
-        if (!user) {
-            return ctx.badRequest(null, [{ messages: [{ id: 'No authorization header was found' }] }]);
-        }
+        if (!user) return ctx.throw(400, 'not authorized');
 
         const userData = await strapi.query('user', 'users-permissions').findOne({id: user.id});
         return sanitizeEntity(userData, { model: strapi.query('user', 'users-permissions').model });

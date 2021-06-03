@@ -5,100 +5,45 @@
  * to customize this model
  */
 
-const TYPE_QUIZ = 'QUIZ_RESPONSE';
+const usePublishTypes = [
+    'BOARD_ARTICLE', // 공지
+    'COMMENT_ON_ACTIVITY',
+    'COMMENT_ON_POST', // 공지,의견에 답변
+    'REPLY_ON_COMMENT', // 답변의 답변 (사용하지 않음)
+];
+
+const useNotifyTypes = [
+    'BOARD_ARTICLE', // 공지
+    'COMMENT_ON_POST', // 공지,의견에 답변
+    'REPLY_ON_COMMENT', // 답변의 답변 (사용하지 않음)
+]
 
 module.exports = {
     lifecycles: {
-        async beforeCreate(data) {
-            // const payload = {
-            //     id: data.id,
-            //     type: data.type,
-            //     activity: data.activity.id,
-            //     content: data.content,
-            //     // group is not defined in post model but added while in pubsub
-            //     group: data.activity && data.activity.group && data.activity.group.toString(),
-            //     writer: data.writer// && data.writer.address
-            // };
-            // if (payload.type === 'QUIZ_RESPONSE') {
-            //     const score = await strapi.services.post.gradingQuiz(payload);
-            //     await strapi.services['score-board'].create({
-            //         type: 'REALTIME',
-            //         record: [{
-            //             score,
-            //             member: data.writer,
-            //             answer: data.id
-            //         }],
-            //         activity: data.activity.id
-            //     })
-            // }
-        },
-        async beforeUpdate(where, data) {
-            try {
-                const payload = {
-                    id: data.id,
-                    type: data.type,
-                    activity: data.activity ? data.activity.id : undefined,
-                    content: data.content,
-                    // group is not defined in post model but added while in pubsub
-                    group: data.activity && data.activity.group && data.activity.group.toString(),
-                    writer: data.writer,
-                };
-
-                if (payload.type === 'QUIZ_RESPONSE') {
-                    const score = await strapi.services.post.gradingQuiz(payload);
-                    await strapi.query('post.record').model.updateOne(
-                        {
-                            member: data.writer,
-                            answer: where._id,
-                        },
-                        { score: score },
-                    );
-                }
-            } catch (e) {
-                console.log(e);
-            }
-        },
         async afterCreate(result) {
-            // console.log('🚀 ~ result', result)
             try {
-                const useFeedTypes = [
-                    'COMMENT_ON_POST', // ACTIVITY_COMMENT
-                    'BOARD_ARTICLE',
-                ];
-                if (useFeedTypes.includes(result.type)) {
-                    const payload = await strapi.services.notification.getNotificationPayload({
-                        ...result,
-                        rejectId: result.writer?.id,
-                    });
-                    await strapi.services.pubsub.publish('feed', payload.body);
+                if (usePublishTypes.includes(result.type)) {
+                    const subPost = {
+                        id: result.id,
+                        type: result.type,
+                        activity: result.activity?.id,
+                        parentPost: result.parentPost?.id,
+                        writer: result.writer?.id,
+                    };
+                    strapi.services.pubsub.publish('postCreated', subPost)
+                        .catch((err) => {
+                            strapi.log.warn({error, result}, 'publish.postCreated exception');
+                        });
                 }
 
-                const payload = {
-                    id: result.id,
-                    type: result.type,
-                    activity: result.activity?.id,
-                    content: result.content,
-                    // group is not defined in post model but added while in pubsub
-                    group: result.activity && result.activity.group && result.activity.group.toString(),
-                    writer: result.writer, // && data.writer.address
-                };
-
-                if (payload.type === 'QUIZ_RESPONSE') {
-                    const score = await strapi.services.post.gradingQuiz(payload);
-                    await strapi.services['score-board'].create({
-                        type: 'REALTIME',
-                        record: [
-                            {
-                                score,
-                                member: result.writer,
-                                answer: result.id,
-                            },
-                        ],
-                        activity: result.activity.id,
-                    });
+                if (useNotifyTypes.includes(result.type)) {
+                    strapi.services.notification.onPostCreated(result)
+                        .catch((err) => {
+                            strapi.log.warn({error, result}, 'notification.postCreated exception');
+                        });
                 }
             } catch (error) {
-                console.log('🚀 ~ file: post.js ~ line 102 ~ afterCreate ~ error', error);
+                strapi.log.warn({error, result}, 'publish.postCreated exception');
             }
         },
     },
