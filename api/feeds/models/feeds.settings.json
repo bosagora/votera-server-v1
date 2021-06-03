@@ -13,16 +13,18 @@
   "attributes": {
     "target": {
       "type": "string",
-      "private": false,
+      "index": true,
       "required": true
     },
     "type": {
       "type": "enumeration",
       "enum": [
         "NEW_PROPOSAL",
+        "ASSESS_PENDING",
         "ASSESS_24HR_DEADLINE",
         "ASSESS_CLOSED",
         "VOTING_START",
+        "VOTING_PENDING",
         "VOTING_24HR_DEADLINE",
         "VOTING_CLOSED",
         "NEW_PROPOSAL_NOTICE",
@@ -41,15 +43,9 @@
       "repeatable": false,
       "component": "navigation.navigation"
     },
-    "timestamp": {
-      "type": "string"
-    },
     "isRead": {
       "type": "boolean",
       "default": false
-    },
-    "rejectId": {
-      "type": "string"
     }
   }
 }

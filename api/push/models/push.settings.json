@@ -12,7 +12,18 @@
   },
   "attributes": {
     "token": {
-      "type": "string"
+      "type": "string",
+      "private": true,
+      "unique": true,
+      "required": true
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    },
+    "user_feed": {
+      "via": "pushes",
+      "model": "user-feed"
     }
   }
 }

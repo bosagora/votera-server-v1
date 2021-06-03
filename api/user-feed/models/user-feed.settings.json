@@ -1,0 +1,48 @@
+{
+  "kind": "collectionType",
+  "collectionName": "user_feeds",
+  "info": {
+    "name": "userFeed",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "plugin": "users-permissions",
+      "model": "user",
+      "via": "user_feed"
+    },
+    "pushes": {
+      "collection": "push",
+      "via": "user_feed"
+    },
+    "locale": {
+      "type": "string"
+    },
+    "myProposalsNews": {
+      "type": "boolean",
+      "default": true
+    },
+    "likeProposalsNews": {
+      "type": "boolean",
+      "default": true
+    },
+    "newProposalsNews": {
+      "type": "boolean",
+      "default": true
+    },
+    "myCommentsNews": {
+      "type": "boolean",
+      "default": true
+    },
+    "etcNews": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

@@ -2,15 +2,33 @@
 
 module.exports = {
     definition: `
-        input createValidatorUserInput {
+        input createValidatorUserData {
             username: String!
             password: String!
             nodeName: String!
             voterCard: String!
+            pushToken: String
+            locale: String
         }
-        input recoverValidatorUserInput {
+        input createValidatorUserInput {
+            data: createValidatorUserData
+        }
+        type createValidatorUserPayload {
+            user: UsersPermissionsUser
+            push: Push
+        }
+        input recoverValidatorUserData {
             password: String!
             voterCard: String!
+            pushToken: String
+            locale: String
+        }
+        input recoverValidatorUserInput {
+            data: recoverValidatorUserData
+        }
+        type recoverValidatorUserPayload {
+            user: UsersPermissionsUser
+            push: Push
         }
         type checkDupUserNamePayload {
             username: String
@@ -27,8 +45,8 @@ module.exports = {
         myMembers: MyMembersPayload
     `,
     mutation: `
-        createValidatorUser(input: createValidatorUserInput): createUserPayload
-        recoverValidatorUser(input: recoverValidatorUserInput): createUserPayload
+        createValidatorUser(input: createValidatorUserInput): createValidatorUserPayload
+        recoverValidatorUser(input: recoverValidatorUserInput): recoverValidatorUserPayload
     `,
     resolver: {
         Query: {
@@ -36,9 +54,8 @@ module.exports = {
                 description: 'Check if username is duplicated',
                 resolverOf: 'application::member.member.checkDupUserName',
                 resolver: async (obj, options, { context }) => {
-                    const username = options.username;
-                    if (!username) throw new Error('missing.username');
-                    const result = await strapi.services.member.checkDupUserName(username);
+                    context.request.body = options;
+                    const result = await strapi.controllers.member.checkDupUserName(context);
                     return result;
                 },
             },
@@ -50,31 +67,11 @@ module.exports = {
         Mutation: {
             createValidatorUser: {
                 description: 'Create Validator User',
-                resolverOf: 'application::member.member.createValidatorUser',
-                resolver: async (obj, options, { context }) => {
-                    const { username, password, nodeName, voterCard } = options.input;
-                    
-                    const result = await strapi.services.member.createValidatorUser(
-                        username,
-                        password,
-                        nodeName,
-                        voterCard,
-                    );
-                    return { user: result };
-                },
+                resolver: 'application::member.member.createValidatorUser',
             },
             recoverValidatorUser: {
                 description: 'Recover Validator User',
-                resolverOf: 'application::member.member.createValidatorUser',
-                resolver: async (obj, options, { context }) => {
-                    const { password, voterCard } = options.input;
-                    
-                    const result = await strapi.services.member.recoverValidatorUser(
-                        password,
-                        voterCard,
-                    );
-                    return { user: result };
-                },
+                resolver: 'application::member.member.recoverValidatorUser',
             }
         },
     },

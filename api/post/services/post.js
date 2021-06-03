@@ -8,17 +8,6 @@ const mongoose = require('mongoose');
  */
 
 module.exports = {
-    async deleteNotices(input) {
-        try {
-            await strapi.services.post.delete({
-                id_in: input.ids
-            });
-            return true;
-        }
-        catch (err) {
-            return false;
-        }
-    },
     async getUserCount(proposalId) {
         const userCounts = await strapi.query('member-role').model.aggregate([
             { $match: { type : {$in: ['USER', 'ADMINISTRATOR']}, scope: 'PROPOSAL', status: 'NORMAL', proposal: new mongoose.Types.ObjectId(proposalId) }},

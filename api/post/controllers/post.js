@@ -39,18 +39,20 @@ module.exports = {
         if (ctx.is('multipart')) {
             const { data, files } = parseMultipartData(ctx);
             const { writer } = data ? data : {};
-            if (! await strapi.services.member.authorizeMember(writer, ctx.state.user, ctx)) {
-                return;
-            }
+            await strapi.services.member.authorizeMember(writer, ctx.state.user, ctx);
 
             post = await strapi.services.post.create(data, { files });
         } else {
             const { writer } = ctx.request.body;
-            if (! await strapi.services.member.authorizeMember(writer, ctx.state.user, ctx)) {
-                return;
-            }
+            await strapi.services.member.authorizeMember(writer, ctx.state.user, ctx);
 
             post = await strapi.services.post.create(ctx.request.body);
+        }
+        if (post && (post.type !== 'SURVEY_RESPONSE' && post.type !== 'POLL_RESPONSE')) {
+            strapi.services.follow.createMyComment(ctx.state.user.user_feed, post.id)
+                .catch((err) => {
+                    strapi.log.warn({err, post}, 'follow.createMyComment error');
+                });
         }
         return sanitizePost(post);
     },
@@ -59,16 +61,13 @@ module.exports = {
         if (ctx.is('multipart')) {
             const { data, files } = parseMultipartData(ctx);
             const { writer } = data ? data : {};
-            if (! await strapi.services.member.authorizeMember(writer, ctx.state.user, ctx)) {
-                return;
-            }
+            await strapi.services.member.authorizeMember(writer, ctx.state.user, ctx);
 
             post = await strapi.services.post.update({ id: ctx.params.id, writer }, data, { files });
         } else {
             const { writer } = ctx.request.body;
-            if (! await strapi.services.member.authorizeMember(writer, ctx.state.user, ctx)) {
-                return;
-            }
+            await strapi.services.member.authorizeMember(writer, ctx.state.user, ctx);
+            
             post = await strapi.services.post.update({ id: ctx.params.id, writer }, ctx.request.body);
         }
         return sanitizePost(post);

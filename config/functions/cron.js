@@ -12,13 +12,9 @@
 
 module.exports = {
     '0 * * * * *': async () => {
-        if (process.env.FEED_ENABLE === 'true') {
-            // 피드서버는 사용하지 않음
-            return;
-        }
-
         await strapi.services.cronjob.tryLock('lock:batch:proposal', async () => {
             await strapi.services.proposal.batchJob();
+            await strapi.services.feeds.batchJob();
         });
     },
 };

@@ -54,26 +54,6 @@ function getExpectedData(proposal) {
     return expected_data;
 }
 
-async function publishFeedToManager(proposalId, feedType) {
-    const result = await strapi.services.proposal.findOne({ id: proposalId });
-
-    // const proposalStatus = result.status;
-    let notificationType;
-    if (feedType === 'VOTING') {
-        notificationType = 'VOTING_START';
-    }
-    if (feedType === 'CLOSED') {
-        notificationType = 'VOTING_CLOSED';
-    }
-
-    const payload = await strapi.services.notification.getNotificationPayload({
-        ...result,
-        type: notificationType || 'NO_TYPE',
-        // rejectId: 없음. 모든인원 수신, 필요하다면 writer.id 추가
-    });
-    await strapi.services.pubsub.publish('feed', payload.body);
-}
-
 async function getPeriodHeight(period) {
     const startDate = confirmDateOnly(period.begin);
     const endDate = confirmDateOnly(period.end) + 86400000;
@@ -249,9 +229,11 @@ module.exports = {
             throw new ApolloError('Create Discussion Error');
         }
     },
-    async joinProposal(proposalId, member) {
-        let proposal = await strapi.query('proposal').findOne({id: proposalId});
-        if (!proposal) throw new Error('proposal.notFound');
+    async joinProposal(id, member) {
+        let proposal = await strapi.query('proposal').findOne({ id });
+        if (!proposal) {
+            return null;
+        }
 
         try {
             await strapi.services.member.getVoterCardFromInput(member.voterCard);
@@ -318,12 +300,10 @@ module.exports = {
 
                     if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
                         if (txResult.tx_hash_proposal_fee) {
-                            await strapi
-                                .query('proposal')
-                                .update(
-                                    { id: proposal.id },
-                                    { tx_hash_proposal_fee: txResult.tx_hash_proposal_fee, status: 'ASSESS' },
-                                );
+                            await strapi.query('proposal').update(
+                                { id: proposal.id },
+                                { tx_hash_proposal_fee: txResult.tx_hash_proposal_fee, status: 'ASSESS' },
+                            );
                         }
                         feeResult.status = 'PAID';
                     } else {
@@ -504,12 +484,10 @@ module.exports = {
                     );
                     if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
                         if (txResult.tx_hash_proposal_fee) {
-                            await strapi
-                                .query('proposal')
-                                .update(
-                                    { id: proposal.id },
-                                    { tx_hash_proposal_fee: txResult.tx_hash_proposal_fee, status: 'ASSESS' },
-                                );
+                            await strapi.query('proposal').update(
+                                { id: proposal.id },
+                                { tx_hash_proposal_fee: txResult.tx_hash_proposal_fee, status: 'ASSESS' },
+                            );
                         } else {
                             strapi.log.error(
                                 { proposal: proposal.proposalId },
@@ -518,14 +496,22 @@ module.exports = {
                         }
                     } else if (proposal.assessPeriod) {
                         const endDate = confirmDateOnly(proposal.assessPeriod.end) + 86400000;
-                        if (Date.now() >= endDate) {
+                        const now = Date.now();
+                        if (now >= endDate) {
                             await strapi.query('proposal').update({ id: proposal.id }, { staus: 'CANCEL' });
+                        } else if (now >= endDate - 86400000) {
+                            // notify to pay proposal_fee
+                            strapi.services.notification.onProposalTimeAlarm(proposal)
+                                .catch((err) => {
+                                    strapi.log.warn({err, proposal}, 'notification.proposalTimeAlarm exception');
+                                });
                         }
                     }
                 } else if (proposal.status === 'ASSESS') {
                     // ASSESS -> PENDING_VOTE or REJECT
                     const endDate = confirmDateOnly(proposal.assessPeriod.end) + 86400000;
-                    if (Date.now() >= endDate) {
+                    const now = Date.now();
+                    if (now >= endDate) {
                         const passed = await this.checkAssessPass(proposal);
                         if (passed) {
                             // ? 이때 validators 목록을 확정을 지어야 되나?
@@ -533,9 +519,15 @@ module.exports = {
                         } else {
                             await strapi.query('proposal').update({ id: proposal.id }, { status: 'REJECT' });
                         }
+                    } else if (now >= endDate - 86400000) {
+                        strapi.services.notification.onProposalTimeAlarm(proposal)
+                            .catch((err) => {
+                                strapi.log.warn({err, proposal}, 'notification.proposalTimeAlaram exception');
+                            });
                     }
                 } else if (proposal.status === 'PENDING_VOTE') {
                     // PENDING_VOTE -> VOTE or CANCEL
+                    const alarmHeight = proposal.vote_start_height - strapi.services.boaclient.BLOCKS_PER_DAY;
                     if (blockHeight < proposal.vote_start_height) {
                         if (!proposal.tx_hash_vote_fee || proposal.tx_hash_vote_fee === '') {
                             if (proposal.validators) {
@@ -563,7 +555,19 @@ module.exports = {
                                             'found transaction but no tx_hash_vote_fee',
                                         );
                                     }
+                                } else if (blockHeight > alarmHeight) {
+                                    // notify to pay vote_fee
+                                    strapi.services.notification.onProposalTimeAlarm(proposal)
+                                        .catch((err) => {
+                                            strapi.log.warn({err, proposal}, 'notification.proposalTimeAlarm exception');
+                                        });
                                 }
+                            } else if (blockHeight > alarmHeight) {
+                                // notify to pay vote_fee
+                                strapi.services.notification.onProposalTimeAlarm(proposal)
+                                    .catch((err) => {
+                                        strapi.log.warn({err, proposal}, 'notification.proposalTimeAlarm exception');
+                                    });
                             }
                         }
                     } else if (blockHeight >= proposal.vote_start_height && blockHeight < proposal.vote_end_height) {
@@ -609,9 +613,15 @@ module.exports = {
                     }
                 } else if (proposal.status === 'VOTE') {
                     // VOTE -> CLOSED
+                    const alarmHeight = proposal.vote_end_height - strapi.services.boaclient.BLOCKS_PER_DAY;
                     if (blockHeight > proposal.vote_end_height) {
                         await strapi.query('proposal').update({ id: proposal.id }, { status: 'CLOSED' });
                         publishFeedToManager(proposal.id, 'CLOSED');
+                    } else if (blockHeight > alarmHeight) {
+                        strapi.services.notification.onProposalTimeAlarm(proposal)
+                            .catch((err) => {
+                                strapi.log.warn({err, proposal}, 'notification.proposalTimeAlarm exception');
+                            });
                     }
                 }
             } catch (err) {

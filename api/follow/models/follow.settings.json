@@ -11,21 +11,24 @@
     "draftAndPublish": false
   },
   "attributes": {
-    "member": {
-      "type": "string"
-    },
     "target": {
-      "type": "string"
-    },
-    "isActive": {
-      "type": "boolean"
-    },
-    "push": {
-      "model": "push"
+      "type": "string",
+      "index": true
     },
     "isFeedActive": {
       "type": "boolean",
       "default": true
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "PROPOSAL_CREATE",
+        "PROPOSAL_JOIN",
+        "POST"
+      ]
+    },
+    "user_feed": {
+      "model": "user-feed"
     }
   }
 }

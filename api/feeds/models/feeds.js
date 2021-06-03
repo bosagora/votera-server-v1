@@ -5,13 +5,4 @@
  * to customize this model
  */
 
-module.exports = {
-    lifecycles: {
-        async afterFind(result) {
-            // console.log('result', result);
-        },
-        // async afterUpdate() {
-        //     console.log('')
-        // }
-    }
-};
+module.exports = {};

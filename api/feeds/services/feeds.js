@@ -5,4 +5,8 @@
  * to customize this service
  */
 
-module.exports = {};
+module.exports = {
+    async batchJob() {
+        // 90일 이상 지난 feed는 삭제
+    }
+};
