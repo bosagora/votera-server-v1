@@ -162,10 +162,9 @@ function makeProposalFeeTransaction(
 
     // make transaction
     const tx = new boasdk.Transaction(
-        boasdk.TxType.Payment,
         [new boasdk.TxInput(boasdk.hash(Buffer.from(boasdk.SodiumHelper.sodium.randombytes_buf(boasdk.Hash.Width))))],
-        [new boasdk.TxOutput(JSBI.BigInt(feeAmount), boasdk.Lock.fromPublicKey(new boasdk.PublicKey(destination)))],
-        new boasdk.DataPayload(fee_bytes.toBuffer()),
+        [new boasdk.TxOutput(boasdk.OutputType.Payment, JSBI.BigInt(feeAmount), boasdk.Lock.fromPublicKey(new boasdk.PublicKey(destination)))],
+        fee_bytes.toBuffer(),
     );
 
     map_sample_tx.set(tx_hash, tx);
@@ -203,16 +202,16 @@ function makeProposalDataTransaction(
 
     // make transaction
     const tx = new boasdk.Transaction(
-        boasdk.TxType.Payment,
         [new boasdk.TxInput(boasdk.hash(Buffer.from(boasdk.SodiumHelper.sodium.randombytes_buf(boasdk.Hash.Width))))],
         validators.map(
             (validator) =>
                 new boasdk.TxOutput(
+                    boasdk.OutputType.Payment,
                     JSBI.BigInt(voting_fee),
                     boasdk.Lock.fromPublicKey(new boasdk.PublicKey(validator)),
                 ),
         ),
-        new boasdk.DataPayload(data_bytes.toBuffer()),
+        data_bytes.toBuffer(),
     );
 
     map_sample_tx.set(tx_hash, tx);
@@ -245,10 +244,9 @@ function makeBallotDataTransaction(address: string, vote_fee: number, data: boas
 
     // make transaction
     const tx = new boasdk.Transaction(
-        boasdk.TxType.Payment,
         [new boasdk.TxInput(boasdk.hash(Buffer.from(boasdk.SodiumHelper.sodium.randombytes_buf(boasdk.Hash.Width))))],
-        [new boasdk.TxOutput(JSBI.BigInt(vote_fee), boasdk.Lock.fromPublicKey(new boasdk.PublicKey(address)))],
-        new boasdk.DataPayload(ballot_bytes.toBuffer()),
+        [new boasdk.TxOutput(boasdk.OutputType.Payment, JSBI.BigInt(vote_fee), boasdk.Lock.fromPublicKey(new boasdk.PublicKey(address)))],
+        ballot_bytes.toBuffer(),
     );
 
     map_sample_tx.set(tx_hash, tx);
@@ -939,10 +937,20 @@ export class TestStoa {
             const app_name = default_app_name;
             const pre_image = getPreimageAt(sample_validators_preimage[index], height);
             const key_agora_admin = boasdk.hashMulti(new boasdk.Hash(pre_image).data, Buffer.from(app_name));
+
+            const validator_key = boasdk.KeyPair.fromSeed(new boasdk.SecretKey(sample_validators_seed[index]));
+            const encryptionKey = new boasdk.EncryptionKey(
+                app_name,
+                new boasdk.Height(req.params.height),
+                key_agora_admin, validator_key.address);
+            encryptionKey.signature = validator_key.sign<boasdk.EncryptionKey>(encryptionKey);
+
             const voterCard = {
                 app: app_name,
-                height,
+                height: height.toString(),
                 value: key_agora_admin.toString(),
+                validator: validator_key.address.toString(),
+                signature: encryptionKey.signature.toString(),
             };
 
             const svg = new QRCode(JSON.stringify(voterCard)).svg();

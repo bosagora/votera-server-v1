@@ -2923,10 +2923,10 @@ bn@^1.0.5:
   resolved "https://registry.yarnpkg.com/bn/-/bn-1.0.5.tgz#fdf5fdeede044884ea7ee62adff763ee99144fa5"
   integrity sha512-7TvGbqbZb6lDzsBtNz1VkdXXV0BVmZKPPViPmo2IpvwaryF7P+QKYKACyVkwo2mZPr2CpFiz7EtgPEcc3o/JFQ==
 
-boa-sdk-ts@^0.0.44:
-  version "0.0.44"
-  resolved "https://registry.yarnpkg.com/boa-sdk-ts/-/boa-sdk-ts-0.0.44.tgz#b3c58d4c86093b58b9aae5b9b86dfdbfd2262929"
-  integrity sha512-YVEItlSjA4fwcRqjRinaLdYeMLBw4BM4FkrtXP3mCvLb+zqJfv5G74zZYvxwHNIwUo1At7k1lS7DRMPFcThXqA==
+boa-sdk-ts@^0.0.49:
+  version "0.0.49"
+  resolved "https://registry.yarnpkg.com/boa-sdk-ts/-/boa-sdk-ts-0.0.49.tgz#a5a087230b96e20fda25e926bae6792926e9de99"
+  integrity sha512-87B9yjCIcftRz/474f5AWYe6swzwi/EIu5QxZR/UwXfF1AFcDuDH5P5Ss8wc40Sa+ODFqhcYI/KYGnhwlQG44w==
   dependencies:
     "@ctrl/ts-base32" "^1.2.1"
     ajv "^6.12.6"

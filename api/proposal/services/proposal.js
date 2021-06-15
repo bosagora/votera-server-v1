@@ -1,5 +1,4 @@
 'use strict';
-const stringify = require('fast-json-stable-stringify');
 
 /**
  * Read the documentation (https://strapi.io/documentation/v3.x/concepts/services.html#core-services)
@@ -31,27 +30,6 @@ async function uniqueCheck(id) {
 function confirmDateOnly(period) {
     const data = new Date(period);
     return new Date(`${data.getFullYear()}-${data.getMonth() + 1}-${data.getDate()} GMT+9`).getTime();
-}
-
-function getExpectedData(proposal) {
-    const expected_data = {
-        app_name: 'Votera',
-        proposal_id: proposal.proposalId,
-        proposal_type: proposal.type === 'SYSTEM' ? boasdk.ProposalType.System : boasdk.ProposalType.Fund,
-        proposal_title: proposal.name,
-        vote_start_height: boasdk.JSBI.BigInt(proposal.vote_start_height),
-        vote_end_height: boasdk.JSBI.BigInt(proposal.vote_end_height),
-        doc_hash: new boasdk.Hash(proposal.doc_hash),
-        vote_fee: boasdk.JSBI.BigInt(proposal.vote_fee),
-        proposer_address: new boasdk.PublicKey(proposal.proposer_address),
-    };
-    if (proposal.type === 'BUSINESS') {
-        expected_data.fund_amount = boasdk.JSBI.BigInt(proposal.fundingAmount);
-        expected_data.proposal_fee = boasdk.JSBI.BigInt(proposal.proposal_fee);
-        expected_data.tx_hash_proposal_fee = new boasdk.Hash(proposal.tx_hash_proposal_fee);
-        expected_data.proposal_fee_address = new boasdk.PublicKey(proposal.proposal_fee_address);
-    }
-    return expected_data;
 }
 
 async function getPeriodHeight(period) {
@@ -97,8 +75,8 @@ async function getProposalDocHash(proposal, uId, start_height, end_height) {
         vote_start_height: start_height,
         vote_end_height: end_height,
     };
-    console.log('proposalInfo = ', stringify(proposalInfo));
-    return boasdk.hash(Buffer.from(stringify(proposalInfo), 'utf8')).toString();
+
+    return strapi.services.boaclient.getProposalDocHash(proposalInfo);
 }
 
 module.exports = {
@@ -391,7 +369,7 @@ module.exports = {
                         }
                     } else {
                         const validators = JSON.parse(proposal.validators);
-                        const expected_data = getExpectedData(proposal);
+                        const expected_data = strapi.services.boaclient.getExpectedData(proposal);
 
                         const txResult = await strapi.services.boaclient.checkProposalDataTransaction(
                             proposal.proposer_address,
@@ -532,7 +510,7 @@ module.exports = {
                         if (!proposal.tx_hash_vote_fee || proposal.tx_hash_vote_fee === '') {
                             if (proposal.validators) {
                                 const validators = JSON.parse(proposal.validators);
-                                const expected_data = getExpectedData(proposal);
+                                const expected_data = strapi.services.boaclient.getExpectedData(proposal);
 
                                 const txResult = await strapi.services.boaclient.checkProposalDataTransaction(
                                     proposal.proposer_address,
@@ -573,7 +551,7 @@ module.exports = {
                     } else if (blockHeight >= proposal.vote_start_height && blockHeight < proposal.vote_end_height) {
                         if (!proposal.tx_hash_vote_fee || proposal.tx_hash_vote_fee === '') {
                             const validators = JSON.parse(proposal.validators);
-                            const expected_data = getExpectedData(proposal);
+                            const expected_data = strapi.services.boaclient.getExpectedData(proposal);
 
                             const txResult = await strapi.services.boaclient.checkProposalDataTransaction(
                                 proposal.proposer_address,

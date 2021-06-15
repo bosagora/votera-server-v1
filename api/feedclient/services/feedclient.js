@@ -446,7 +446,7 @@ module.exports = {
 
         if (type === 'NEW_OPINION_COMMENT') {
             await processComment(
-                post.id,
+                post.parentPost.id,
                 post.activity.id,
                 post.writer.username,
                 type
