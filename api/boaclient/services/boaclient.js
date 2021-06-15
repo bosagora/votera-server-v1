@@ -2,6 +2,7 @@ const boasdk = require('boa-sdk-ts');
 const BOASodium = require('boa-sodium-ts');
 const URI = require('urijs');
 const sb = require('smart-buffer');
+const stringify = require('fast-json-stable-stringify');
 
 const CHECK_RESULT_NOTFOUND = 0;
 const CHECK_RESULT_FOUND = 1;
@@ -120,12 +121,12 @@ module.exports = {
                     }
 
                     const tx = await this.boaClient.getTransaction(new boasdk.Hash(item.tx_hash));
-                    const header = tx.payload.data.slice(1, 9);
+                    const header = tx.payload.slice(1, 9);
                     if (Buffer.compare(Buffer.from(boasdk.ProposalFeeData.HEADER), header) !== 0) {
                         continue;
                     }
 
-                    const payload = boasdk.ProposalFeeData.deserialize(sb.SmartBuffer.fromBuffer(tx.payload.data));
+                    const payload = boasdk.ProposalFeeData.deserialize(sb.SmartBuffer.fromBuffer(tx.payload));
                     if (payload.app_name !== 'Votera' || payload.proposal_id !== proposal_id) {
                         continue;
                     }
@@ -192,12 +193,12 @@ module.exports = {
                     }
 
                     const tx = await this.boaClient.getTransaction(new boasdk.Hash(item.tx_hash));
-                    const header = tx.payload.data.slice(1, 9);
+                    const header = tx.payload.slice(1, 9);
                     if (Buffer.compare(Buffer.from(boasdk.ProposalData.HEADER), header) !== 0) {
                         continue;
                     }
 
-                    const payload = boasdk.ProposalData.deserialize(sb.SmartBuffer.fromBuffer(tx.payload.data));
+                    const payload = boasdk.ProposalData.deserialize(sb.SmartBuffer.fromBuffer(tx.payload));
                     if (payload.app_name !== expected_data.app_name || payload.proposal_id !== expected_data.proposal_id) {
                         continue;
                     }
@@ -277,12 +278,12 @@ module.exports = {
                     }
 
                     const tx = await this.boaClient.getTransaction(new boasdk.Hash(item.tx_hash));
-                    const header = tx.payload.data.slice(1, 9);
+                    const header = tx.payload.slice(1, 9);
                     if (Buffer.compare(Buffer.from(boasdk.BallotData.HEADER), header) !== 0) {
                         continue;
                     }
 
-                    const payload = boasdk.BallotData.deserialize(sb.SmartBuffer.fromBuffer(tx.payload.data));
+                    const payload = boasdk.BallotData.deserialize(sb.SmartBuffer.fromBuffer(tx.payload));
                     if (!payload.card.verify() || payload.verify()) {
                         continue;
                     }
@@ -304,5 +305,44 @@ module.exports = {
         }
 
         return result;
+    },
+
+    async getProposalDocHash(proposalInfo) {
+        /**
+         * proposalInfo {
+         *  proposalId: string;
+         *  name: string;
+         *  description: string;
+         *  type: string;
+         *  fundingAmount: string;
+         *  logo: { name, url, size, doc_hash, }
+         *  attachment: [ { name, url, size, doc_hash, } ]
+         *  vote_start_height: JSBI
+         *  vote_end_height: JSBI
+         * }
+         */
+        console.log('proposalInfo = ', stringify(proposalInfo));
+        return boasdk.hash(Buffer.from(stringify(proposalInfo), 'utf8')).toString();
+    },
+
+    getExpectedData(proposal) {
+        const expected_data = {
+            app_name: 'Votera',
+            proposal_id: proposal.proposalId,
+            proposal_type: proposal.type === 'SYSTEM' ? boasdk.ProposalType.System : boasdk.ProposalType.Fund,
+            proposal_title: proposal.name,
+            vote_start_height: boasdk.JSBI.BigInt(proposal.vote_start_height),
+            vote_end_height: boasdk.JSBI.BigInt(proposal.vote_end_height),
+            doc_hash: new boasdk.Hash(proposal.doc_hash),
+            vote_fee: boasdk.JSBI.BigInt(proposal.vote_fee),
+            proposer_address: new boasdk.PublicKey(proposal.proposer_address),
+        };
+        if (proposal.type === 'BUSINESS') {
+            expected_data.fund_amount = boasdk.JSBI.BigInt(proposal.fundingAmount);
+            expected_data.proposal_fee = boasdk.JSBI.BigInt(proposal.proposal_fee);
+            expected_data.tx_hash_proposal_fee = new boasdk.Hash(proposal.tx_hash_proposal_fee);
+            expected_data.proposal_fee_address = new boasdk.PublicKey(proposal.proposal_fee_address);
+        }
+        return expected_data;
     }
 };
