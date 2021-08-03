@@ -100,7 +100,7 @@ module.exports = {
      *  3 : found proposal fee transaction but 
      * tx_hash_proposal_fee
      */
-    async checkProposalFeeTransaction(proposal_id, begin, address, fee_address, proposal_fee) {
+    async checkProposalFeeTransaction(proposal_id, begin, address, fee_address, proposal_fee, query_end) {
         try {
             if (!address || !proposal_fee || !fee_address) {
                 return { result: CHECK_RESULT_NOTFOUND };
@@ -112,7 +112,7 @@ module.exports = {
             let result = 0;
             let tx_hash_proposal_fee;
             let page = 1;
-            let history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin);
+            let history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin, query_end);
             while (history && history.length > 0) {
                 for (let idx = 0; idx < history.length; idx += 1) {
                     const item = history[idx];
@@ -147,7 +147,7 @@ module.exports = {
                 }
 
                 page += 1;
-                history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin);
+                history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin, query_end);
             }
 
             return { result, tx_hash_proposal_fee };
@@ -172,7 +172,7 @@ module.exports = {
      *  3 : found proposal fee transaction but 
      * tx_hash_vote_fee
      */
-    async checkProposalDataTransaction(address, begin, expected_data, validators) {
+    async checkProposalDataTransaction(address, begin, expected_data, validators, query_end) {
         try {
             if (!address || !expected_data || !validators) {
                 return { result: CHECK_RESULT_NOTFOUND };
@@ -181,10 +181,9 @@ module.exports = {
             const public_key = new boasdk.PublicKey(address);
             const vote_cost = boasdk.JSBI.divide(expected_data.vote_fee, boasdk.JSBI.BigInt(validators.length));
 
-            let result = 0;
             let tx_hash_vote_fee;
             let page = 1;
-            let history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin);
+            let history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin, query_end);
             while (history && history.length > 0) {
                 for (let idx = 0; idx < history.length; idx += 1) {
                     const item = history[idx];
@@ -249,7 +248,7 @@ module.exports = {
                 }
 
                 page += 1;
-                history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin);
+                history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin, query_end);
             }
 
             return { result, tx_hash_vote_fee };
@@ -296,7 +295,7 @@ module.exports = {
                 }
 
                 page += 1;
-                history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin);
+                history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin, end);
             }
 
             return result;
