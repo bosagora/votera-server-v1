@@ -268,12 +268,15 @@ module.exports = {
                         return feeResult;
                     }
 
+                    const blockHeight = await strapi.services.boaclient.getCurrentBlockHeight();
+
                     const txResult = await strapi.services.boaclient.checkProposalFeeTransaction(
                         proposal.proposalId,
                         proposal.proposal_begin,
                         proposal.proposer_address,
                         proposal.proposal_fee_address,
                         proposal.proposal_fee,
+                        blockHeight
                     );
 
                     if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
@@ -376,6 +379,7 @@ module.exports = {
                             proposal.proposal_begin,
                             expected_data,
                             validators,
+                            currentBlockHeight
                         );
 
                         if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
@@ -459,6 +463,7 @@ module.exports = {
                         proposal.proposer_address,
                         proposal.proposal_fee_address,
                         proposal.proposal_fee,
+                        blockHeight
                     );
                     if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
                         if (txResult.tx_hash_proposal_fee) {
@@ -517,6 +522,7 @@ module.exports = {
                                     proposal.proposal_begin,
                                     expected_data,
                                     validators,
+                                    blockHeight
                                 );
 
                                 if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
@@ -558,6 +564,7 @@ module.exports = {
                                 proposal.proposal_begin,
                                 expected_data,
                                 validators,
+                                blockHeight
                             );
 
                             if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
