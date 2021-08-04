@@ -100,7 +100,7 @@ module.exports = {
      *  3 : found proposal fee transaction but 
      * tx_hash_proposal_fee
      */
-    async checkProposalFeeTransaction(proposal_id, begin, address, fee_address, proposal_fee, query_end) {
+    async checkProposalFeeTransaction(proposal_id, query_begin, address, fee_address, proposal_fee, query_end) {
         try {
             if (!address || !proposal_fee || !fee_address) {
                 return { result: CHECK_RESULT_NOTFOUND };
@@ -112,7 +112,7 @@ module.exports = {
             let result = 0;
             let tx_hash_proposal_fee;
             let page = 1;
-            let history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin, query_end);
+            let history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], query_begin, query_end);
             while (history && history.length > 0) {
                 for (let idx = 0; idx < history.length; idx += 1) {
                     const item = history[idx];
@@ -147,7 +147,7 @@ module.exports = {
                 }
 
                 page += 1;
-                history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin, query_end);
+                history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], query_begin, query_end);
             }
 
             return { result, tx_hash_proposal_fee };
@@ -161,7 +161,7 @@ module.exports = {
     /**
      * 
      * @param {*} address 
-     * @param {*} begin 
+     * @param {*} query_begin 
      * @param {*} expected_data 
      * @param {*} validators 
      * @returns
@@ -172,7 +172,7 @@ module.exports = {
      *  3 : found proposal fee transaction but 
      * tx_hash_vote_fee
      */
-    async checkProposalDataTransaction(address, begin, expected_data, validators, query_end) {
+    async checkProposalDataTransaction(address, query_begin, expected_data, validators, query_end) {
         try {
             if (!address || !expected_data || !validators) {
                 return { result: CHECK_RESULT_NOTFOUND };
@@ -183,7 +183,7 @@ module.exports = {
 
             let tx_hash_vote_fee;
             let page = 1;
-            let history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin, query_end);
+            let history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], query_begin, query_end);
             while (history && history.length > 0) {
                 for (let idx = 0; idx < history.length; idx += 1) {
                     const item = history[idx];
@@ -248,7 +248,7 @@ module.exports = {
                 }
 
                 page += 1;
-                history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin, query_end);
+                history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], query_begin, query_end);
             }
 
             return { result, tx_hash_vote_fee };
@@ -258,7 +258,7 @@ module.exports = {
 
         return { result: CHECK_RESULT_NOTFOUND };
     },
-    async getBallotData(address, app_name, proposal_id, begin, end) {
+    async getBallotData(address, app_name, proposal_id, query_begin, query_end) {
         try {
             if (!address) {
                 return [];
@@ -268,7 +268,7 @@ module.exports = {
             const public_key = new boasdk.PublicKey(address);
 
             let page = 1;
-            let history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin, end);
+            let history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], query_begin, query_end);
             while (history && history.length) {
                 for (let idx = 0; idx < history.length; idx += 1) {
                     const item = history[idx];
@@ -295,7 +295,7 @@ module.exports = {
                 }
 
                 page += 1;
-                history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], begin, end);
+                history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], query_begin, query_end);
             }
 
             return result;

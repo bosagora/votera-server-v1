@@ -268,15 +268,13 @@ module.exports = {
                         return feeResult;
                     }
 
-                    const blockHeight = await strapi.services.boaclient.getCurrentBlockHeight();
-
                     const txResult = await strapi.services.boaclient.checkProposalFeeTransaction(
                         proposal.proposalId,
-                        proposal.proposal_begin,
+                        Math.floor(proposal.createdAt.getTime() / 1000),
                         proposal.proposer_address,
                         proposal.proposal_fee_address,
                         proposal.proposal_fee,
-                        blockHeight
+                        Math.floor(Date.now() / 1000)
                     );
 
                     if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
@@ -376,10 +374,10 @@ module.exports = {
 
                         const txResult = await strapi.services.boaclient.checkProposalDataTransaction(
                             proposal.proposer_address,
-                            proposal.proposal_begin,
+                            Math.floor(proposal.createdAt.getTime() / 1000),
                             expected_data,
                             validators,
-                            currentBlockHeight
+                            Math.floor(Date.now() / 1000)
                         );
 
                         if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
@@ -459,11 +457,11 @@ module.exports = {
                     // PENDING_ASSESS -> ASSESS or CANCEL
                     const txResult = await strapi.services.boaclient.checkProposalFeeTransaction(
                         proposal.proposalId,
-                        proposal.proposal_begin,
+                        Math.floor(proposal.createdAt.getTime() / 1000),
                         proposal.proposer_address,
                         proposal.proposal_fee_address,
                         proposal.proposal_fee,
-                        blockHeight
+                        Math.floor(Date.now() / 1000)
                     );
                     if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
                         if (txResult.tx_hash_proposal_fee) {
@@ -519,10 +517,10 @@ module.exports = {
 
                                 const txResult = await strapi.services.boaclient.checkProposalDataTransaction(
                                     proposal.proposer_address,
-                                    proposal.proposal_begin,
+                                    Math.floor(proposal.createdAt.getTime() / 1000),
                                     expected_data,
                                     validators,
-                                    blockHeight
+                                    Math.floor(Date.now() / 1000)
                                 );
 
                                 if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
@@ -561,10 +559,10 @@ module.exports = {
 
                             const txResult = await strapi.services.boaclient.checkProposalDataTransaction(
                                 proposal.proposer_address,
-                                proposal.proposal_begin,
+                                Math.floor(proposal.createdAt.getTime() / 1000),
                                 expected_data,
                                 validators,
-                                blockHeight
+                                Math.floor(Date.now() / 1000)
                             );
 
                             if (txResult && txResult.result === strapi.services.boaclient.CHECK_RESULT_FOUND) {
