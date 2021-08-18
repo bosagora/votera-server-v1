@@ -32,9 +32,21 @@ function confirmDateOnly(period) {
     return new Date(`${data.getFullYear()}-${data.getMonth() + 1}-${data.getDate()} GMT+9`).getTime();
 }
 
+function getAssessEndOffset() {
+    return strapi.config.boaclient.service.assess_end_offset * 1000;
+}
+
+function getVoteBeginOffset() {
+    return strapi.config.boaclient.service.vote_begin_offset * 1000;
+}
+
+function getVoteEndOffset() {
+    return strapi.config.boaclient.service.vote_end_offset * 1000;
+}
+
 async function getPeriodHeight(period) {
-    const startDate = confirmDateOnly(period.begin);
-    const endDate = confirmDateOnly(period.end) + 86400000;
+    const startDate = confirmDateOnly(period.begin) + getVoteBeginOffset();
+    const endDate = confirmDateOnly(period.end) + getVoteEndOffset();
 
     const start_height = await strapi.services.boaclient.getHeightAt(new Date(startDate));
     const end_height = (await strapi.services.boaclient.getHeightAt(new Date(endDate))) - 1;
@@ -234,6 +246,49 @@ module.exports = {
 
         return { invalidVoterCard: false, proposal };
     },
+    async assessResult(proposal) {
+        if (!proposal || proposal.type !== 'BUSINESS') {
+            return proposal;
+        }
+        if (proposal.status === 'PENDING_ASSESS' || proposal.status === 'ASSESS') {
+            return proposal;
+        }
+        for (const activity of proposal.activities) {
+            if (activity?.type === 'SURVEY') {
+                try {
+                    const summary = await strapi.services.activity.summarize(activity.id);
+                    let nodeCount = 0;
+                    let total = 0;
+                    const avgs = summary?.data?.map((d) => {
+                        let sum = 0;
+                        let sc = 0;
+                        Object.keys(d.response).map((key) => {
+                            const point = parseInt(key) + 1;
+                            const count = d.response[key];
+    
+                            sum += point * count;
+                            sc += count;
+                        });
+                        if (nodeCount !== sc) nodeCount = sc;
+                        const avg = Math.round((sum / sc) * 10) / 10;
+                        total += avg;
+                        return avg;
+                    });
+                    proposal.assessResult = {
+                        average: total / 5,
+                        nodeCount,
+                        completeness: avgs[0],
+                        realization: avgs[1],
+                        profitability: avgs[2],
+                        attractiveness: avgs[3],
+                        expansion: avgs[4],
+                    }
+                } catch (err) {
+                }
+            }
+        };
+        return proposal;
+    },
     async proposalFee(id) {
         try {
             const proposal = await strapi.query('proposal').findOne({ id });
@@ -262,8 +317,8 @@ module.exports = {
             // check current status
             if (proposal.status === 'PENDING_ASSESS') {
                 if (!proposal.tx_hash_proposal_fee) {
-                    const assessPeriodBegin = new Date(proposal.assessPeriod.begin);
-                    if (assessPeriodBegin.getTime() > Date.now()) {
+                    const assessPeriodEnd = confirmDateOnly(proposal.assessPeriod.end) + getAssessEndOffset();
+                    if (assessPeriodEnd < Date.now()) {
                         feeResult.status = 'EXPIRED';
                         return feeResult;
                     }
@@ -476,7 +531,7 @@ module.exports = {
                             );
                         }
                     } else if (proposal.assessPeriod) {
-                        const endDate = confirmDateOnly(proposal.assessPeriod.end) + 86400000;
+                        const endDate = confirmDateOnly(proposal.assessPeriod.end) + getAssessEndOffset();
                         const now = Date.now();
                         if (now >= endDate) {
                             await strapi.query('proposal').update({ id: proposal.id }, { staus: 'CANCEL' });
@@ -490,7 +545,7 @@ module.exports = {
                     }
                 } else if (proposal.status === 'ASSESS') {
                     // ASSESS -> PENDING_VOTE or REJECT
-                    const endDate = confirmDateOnly(proposal.assessPeriod.end) + 86400000;
+                    const endDate = confirmDateOnly(proposal.assessPeriod.end) + getAssessEndOffset();
                     const now = Date.now();
                     if (now >= endDate) {
                         const passed = await this.checkAssessPass(proposal);
@@ -554,6 +609,12 @@ module.exports = {
                         }
                     } else if (blockHeight >= proposal.vote_start_height && blockHeight < proposal.vote_end_height) {
                         if (!proposal.tx_hash_vote_fee || proposal.tx_hash_vote_fee === '') {
+                            if (!proposal.validators) {
+                                // change to cancel because proposer even didn't query vote fee
+                                await strapi.query('proposal').update({ id: proposal.id }, { status: 'CANCEL' });
+                                continue;
+                            } 
+
                             const validators = JSON.parse(proposal.validators);
                             const expected_data = strapi.services.boaclient.getExpectedData(proposal);
 

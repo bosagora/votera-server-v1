@@ -55,6 +55,22 @@
       "config": {
         "policies": []
       }
+    },
+    {
+      "method": "GET",
+      "path": "/votera-proposal/:_proposalId",
+      "handler": "proposal.findVotera",
+      "config": {
+        "policies": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/proposals/test",
+      "handler": "proposal.testCreate",
+      "config": {
+        "policies": []
+      }
     }
   ]
 }

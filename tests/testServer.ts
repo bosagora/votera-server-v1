@@ -757,6 +757,12 @@ export class TestStoa {
             res.status(200).send(height);
         });
 
+        this.app.get('/block_height_at/:_date', (req: express.Request, res: express.Response) => {
+            const _date = Number(req.params._date);
+            const height = getBlockHeightAt(new Date(_date * 1000)).toString();
+            res.status(200).send(height);
+        });
+
         // http://localhost/transaction/fees
         this.app.get(`/transaction/fees/:tx_size`, (req: express.Request, res: express.Response) => {
             let size: string = req.params.tx_size.toString();

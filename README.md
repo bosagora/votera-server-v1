@@ -117,7 +117,7 @@ Votera Server (Using strapi server)
 |Application|Member|all|
 |Application|MemberRole|count, find, findone|
 |Application|Post|count, create, find, findone, listposts, update|
-|Application|Proposal|count, create, find, findbyid, findone, join|
+|Application|Proposal|count, create, find, findbyid, findone, findvotera, join|
 |Application|Version|find|
 |Upload|Upload|upload|
 |Users-Permissions|Auth|connect|
@@ -133,11 +133,17 @@ Votera Server (Using strapi server)
 |Application|Member|checkdupusername, count, createvalidatoruser, find, findone, recovervalidatoruser|
 |Application|MemberRole|count, find, findone|
 |Application|Post|count, find, findone|
-|Application|Proposal|count, find, findbyid, findone|
+|Application|Proposal|count, find, findbyid, findone, findvotera|
 |Application|Version|find|
 |Users-Permissions|Auth|callback, connect, emailconfirmation, forgotpassword, register, resetpassword|
 |Users-Permissions|User|me|
 
+### method for Tester permission
+|Plugin|Name|Method|
+|------|----|------|
+|Users-Permissions|Auth|callback, connect, emailconfirmation, forgotpassword, register, resetpassword|
+|Users-Permissions|User|me|
+|Application|Proposal|testcreate|
 
 ### Agora 
 |Field|Description|
