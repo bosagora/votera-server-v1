@@ -6,6 +6,75 @@ const { sanitizeEntity } = require('strapi-utils');
  * to customize this controller
  */
 
+function checkCreateProposalStatus(proposal, ctx) {
+    switch(proposal.type) {
+        case 'SYSTEM':
+            if (proposal.status !== 'PENDING_VOTE') {
+                return ctx.throw(400, 'invalid proposal status');
+            }
+            break;
+        case 'BUSINESS':
+            if (proposal.status !== 'PENDING_ASSESS') {
+                return ctx.throw(400, 'invalid proposal status');
+            }
+            break;
+        default:
+            return ctx.throw(400, 'unknown proposal type');
+    }
+}
+
+async function addTestSurvey(proposal, ctx) {
+    if (!proposal || proposal.type !== 'BUSINESS') {
+        return;
+    }
+    if (proposal.status !== 'PENDING_VOTE' && proposal.status !== 'VOTE' && proposal.status !== 'CLOSED') {
+        return;
+    }
+
+    try {
+        const assessActivity = proposal.activities?.find(
+            (activity) => activity?.type === 'SURVEY',
+        );
+        if (!assessActivity) {
+            return;
+        }
+    
+        const activity = await strapi.services.activity.findOne({id: assessActivity.id}, [
+            { path: 'survey', populate: { path: 'questions'} }
+        ])
+    
+        const assessResult = [
+            {key: 0, value: 7},
+            {key: 1, value: 7},
+            {key: 2, value: 8},
+            {key: 3, value: 8},
+            {key: 4, value: 6},
+        ];
+        const data = {
+            activity: activity.id,
+            type: 'SURVEY_RESPONSE',
+            status: 'OPEN',
+            content: activity.survey?.questions?.map((q) => {
+                if (q?.sequence !== undefined) {
+                    return {
+                        __component: 'post.scale-answer',
+                        value: assessResult[q?.sequence].value,
+                        sequence: assessResult[q?.sequence].key,
+                        question: q.id,
+                    };
+                }
+            })
+        };
+    
+        const post = await strapi.services.post.create(data);
+        if (post) {
+            console.log('create survey post id : ', post.id);
+        }
+    } catch (err) {
+        console.log('addTestSurvey error ', err);
+    }
+}
+
 module.exports = {
     async find(ctx) {
         let entities;
@@ -23,6 +92,25 @@ module.exports = {
         });
         return sanitizeEntity(proposal, { model: strapi.models.proposal });
     },
+    async findVotera(ctx) {
+        const { _proposalId } = ctx.params;
+        const proposal = await strapi.services.proposal.findOne({
+            proposalId: _proposalId,
+        });
+        let tempProposal = sanitizeEntity(proposal, { model: strapi.models.proposal });
+        if (tempProposal && tempProposal.type === 'BUSINESS') {
+            tempProposal = await strapi.services.proposal.assessResult(tempProposal);
+        }
+        const {
+            creator,
+            member_count,
+            timeAlarm_notified,
+            activities,
+            roles,
+            interactions,
+            ...voteraProposal } = tempProposal;
+        return voteraProposal;
+    },
     /**
      * Create a record.
      *
@@ -34,11 +122,13 @@ module.exports = {
             const { data, files } = parseMultipartData(ctx);
             const { creator } = data ? data : {};
             await strapi.services.member.authorizeMember(creator, ctx.state.user, ctx);
+            checkCreateProposalStatus(data, ctx);
 
             proposal = await strapi.services.proposal.createProposal(data, { files });
         } else {
             const { creator } = ctx.request.body;
             await strapi.services.member.authorizeMember(creator, ctx.state.user, ctx);
+            checkCreateProposalStatus(ctx.request.body, ctx);
 
             proposal = await strapi.services.proposal.createProposal(ctx.request.body);
         }
@@ -80,4 +170,15 @@ module.exports = {
 
         return result;
     },
+    async testCreate(ctx) {
+        let proposal;
+        if (ctx.is('multipart')) {
+            const { data, files } = parseMultipartData(ctx);
+            proposal = await strapi.services.proposal.createProposal(data, { files });
+        } else {
+            proposal = await strapi.services.proposal.createProposal(ctx.request.body);
+        }
+        await addTestSurvey(proposal, ctx);
+        return sanitizeEntity(proposal, { model: strapi.models.proposal });
+    }
 };

@@ -9,5 +9,8 @@ module.exports = ({env}) => ({
     },
     service: {
         vote_payload_size: env.int('VOTE_PAYLOAD_SIZE', 273),
+        assess_end_offset: env.int('ASSESS_END_OFFSET', 86400),
+        vote_begin_offset: env.int('VOTE_BEGIN_OFFSET', 0),
+        vote_end_offset: env.int('VOTE_END_OFFSET', 86400)
     }
 });

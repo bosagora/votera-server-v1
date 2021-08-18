@@ -320,7 +320,7 @@ module.exports = {
          *  vote_end_height: JSBI
          * }
          */
-        console.log('proposalInfo = ', stringify(proposalInfo));
+        // console.log('proposalInfo = ', stringify(proposalInfo));
         return boasdk.hash(Buffer.from(stringify(proposalInfo), 'utf8')).toString();
     },
 
