@@ -29,7 +29,9 @@ async function uniqueCheck(id) {
  */
 function confirmDateOnly(period) {
     const data = new Date(period);
-    return new Date(`${data.getFullYear()}-${data.getMonth() + 1}-${data.getDate()} GMT+9`).getTime();
+    const m = data.getMonth() + 1;
+    const d = data.getDate();
+    return new Date(`${data.getFullYear()}-${m < 10 ? ('0' + m) : m.toString()}-${d < 10 ? ('0' + d) : d.toString()} GMT+9`).getTime();
 }
 
 function getAssessEndOffset() {
@@ -406,12 +408,18 @@ module.exports = {
                             const proposalVoteFee = boasdk.JSBI.multiply(vote_fee, boasdk.JSBI.BigInt(validators.length));
                             proposal.vote_fee = proposalVoteFee.toString();
                             proposal.validators = JSON.stringify(validators.map((validator) => validator.address));
+                            const inputData = { vote_fee: proposal.vote_fee, validators: proposal.validators };
+
+                            if (!proposal.doc_hash) {
+                                proposal.doc_hash = await getProposalDocHash(proposal, proposal.proposalId, proposal.vote_start_height, proposal.vote_end_height);
+                                inputData.doc_hash = proposal.doc_hash;
+                            }
 
                             await strapi
                                 .query('proposal')
                                 .update(
                                     { id: proposal.id },
-                                    { vote_fee: proposal.vote_fee, validators: proposal.validators },
+                                    inputData,
                                 );
                             return {
                                 status: 'WAIT',
