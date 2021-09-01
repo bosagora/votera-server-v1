@@ -39,11 +39,14 @@ let sample_validators_preimage = [
     '0xe072724b132279724ae67e64a6642ea32abfab2c1dff3ae7f85a4aa91cd680bb24fe4b6739d1e296ee6d48b61dbc45fe90cb2883bb1d01eb8cd73a10bdcdf083',
 ];
 
-const maxHeight = 1000;
+const maxHeight = 100;
 const map_sample_tx = new Map<string, boasdk.Transaction>();
 const list_tx_history: boasdk.ITxHistoryElement[] = [];
 
 let jwt: string;
+
+const milliseconds_per_block = 600000;
+// const milliseconds_per_block = 10000;   // per 10 sec
 
 function getBlockHeightAt(when: Date) {
     const baseDate = new Date(Date.UTC(2020, 0, 1, 0, 0, 0));
@@ -51,9 +54,17 @@ function getBlockHeightAt(when: Date) {
         return 0;
     }
     
-    const milliseconds_per_block = 600000;
     const height = Math.floor((when.getTime() - baseDate.getTime()) / milliseconds_per_block);
     return height;
+}
+
+function getWhenAtBlock(height: number) {
+    const baseDate = new Date(Date.UTC(2020, 0, 1, 0, 0, 0));
+    const time_stamp = Math.floor((baseDate.getTime() + height * milliseconds_per_block) / 1000);
+    return {
+        height,
+        time_stamp
+    };
 }
 
 async function getProposal(proposal_id: string) {
@@ -89,11 +100,11 @@ async function getProposal(proposal_id: string) {
 }
 
 function getPreimageAt(basis_preimage: string, height: number) {
-    if (height < 0 || height >= maxHeight) {
+    if (height < 0) {
         throw new Error('invalid parameter');
     }
 
-    const hashCount = maxHeight - height;
+    const hashCount = height % maxHeight;
     if (hashCount === 0) {
         return basis_preimage;
     }
@@ -763,6 +774,11 @@ export class TestStoa {
             res.status(200).send(height);
         });
 
+        this.app.get('/wallet/blocks/header', async (req: express.Request, res: express.Response) => {
+            const height = req.query.height ? Number(req.query.height) : getBlockHeightAt(new Date());
+            res.status(200).send(getWhenAtBlock(height));
+        });
+
         // http://localhost/transaction/fees
         this.app.get(`/transaction/fees/:tx_size`, (req: express.Request, res: express.Response) => {
             let size: string = req.params.tx_size.toString();
@@ -933,7 +949,7 @@ export class TestStoa {
                 }
             }
             const height = parseInt(req.params.height, 10);
-            if (height < 0 || height >= maxHeight) {
+            if (height < 0) {
                 res.status(400).send('invalid height');
                 return;
             }

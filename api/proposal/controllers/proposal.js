@@ -102,7 +102,6 @@ module.exports = {
             tempProposal = await strapi.services.proposal.assessResult(tempProposal);
         }
         const {
-            creator,
             member_count,
             timeAlarm_notified,
             activities,
@@ -110,6 +109,23 @@ module.exports = {
             interactions,
             ...voteraProposal } = tempProposal;
         return voteraProposal;
+    },
+    async estimateVotePeriod(ctx) {
+        const { _proposalId } = ctx.params;
+        const proposal = await strapi.services.proposal.findOne({
+            proposalId: _proposalId,
+        });
+        if (!proposal) {
+            return ctx.throw(404, 'Not Found Proposal');
+        }
+        try {
+            return await strapi.services.boaclient.estimatePeriod(
+                proposal.vote_start_height - 1,
+                proposal.vote_end_height,
+            );
+        } catch (err) {
+            return ctx.throw(500, 'Internal Error');
+        }
     },
     /**
      * Create a record.
