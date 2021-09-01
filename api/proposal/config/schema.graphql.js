@@ -24,6 +24,7 @@ module.exports = {
             fundingAmount: String
             proposalId: String!
             logo: UploadFile
+            creator: Member
             assessPeriod: ComponentCommonPeriod
             votePeriod: ComponentCommonPeriod
             proposal_address: String
@@ -79,12 +80,17 @@ module.exports = {
             invalidVoterCard: Boolean
             proposal: Proposal
         }
+        type VotePeriodPayload {
+            begin: DateTime
+            end: DateTime
+        }
     `,
     query: `
         proposalById(proposalId: String!): Proposal
         proposalFee(id: ID!): ProposalFeePayload
         voteFee(id: ID!): VoteFeePayload
         voteraProposal(proposalId: String!): VoteraProposal
+        estimatedVotePeriod(proposalId: String!): VotePeriodPayload
     `,
     mutation: `
         joinProposal(input: joinProposalInput!): JoinProposalPayload
@@ -117,6 +123,10 @@ module.exports = {
                 description: 'Get a VoteraProposal by proposalId',
                 resolver: 'application::proposal.proposal.findVotera',
             },
+            estimatedVotePeriod: {
+                description: 'Estimate Vote period',
+                resolver: 'application::proposal.proposal.estimateVotePeriod',
+            }
         },
         Mutation: {
             createProposal: {

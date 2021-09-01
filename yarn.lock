@@ -2923,10 +2923,10 @@ bn@^1.0.5:
   resolved "https://registry.yarnpkg.com/bn/-/bn-1.0.5.tgz#fdf5fdeede044884ea7ee62adff763ee99144fa5"
   integrity sha512-7TvGbqbZb6lDzsBtNz1VkdXXV0BVmZKPPViPmo2IpvwaryF7P+QKYKACyVkwo2mZPr2CpFiz7EtgPEcc3o/JFQ==
 
-boa-sdk-ts@^0.0.55:
-  version "0.0.55"
-  resolved "https://registry.yarnpkg.com/boa-sdk-ts/-/boa-sdk-ts-0.0.55.tgz#2a354bcbe4b68500e1f513b41a7d3edf741d4652"
-  integrity sha512-YWotodrLGP0n8JwMrrfXRPmRKSWcu5D93YPZ8JR764If0N/3+qIJHlAfHHoFTCpNXQeChLy3jwuMNb7ZWDpdfg==
+boa-sdk-ts@^0.1.5:
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/boa-sdk-ts/-/boa-sdk-ts-0.1.5.tgz#d00c2e74dde7ef65a6d92e134d03b375c96c3427"
+  integrity sha512-JBCDgiPhEYqHPngbGqZom3iD2RTBgh84Mfgrc6AI58uKEzgA0DW0TnzNvFt9HNT9Ncg5SsKRgNTjgwd0AesnbA==
   dependencies:
     "@ctrl/ts-base32" "^1.2.1"
     ajv "^6.12.6"
@@ -2934,7 +2934,7 @@ boa-sdk-ts@^0.0.55:
     bech32 "^2.0.0"
     boa-sodium-base-ts "0.1.0"
     crc "^3.8.0"
-    jsbi "^3.1.4"
+    jsbi "^3.1.6"
     lodash "^4.17.19"
     smart-buffer "^4.1.0"
     urijs "^1.19.2"
@@ -6809,10 +6809,10 @@ js-sha3@0.8.0:
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
   integrity sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
 
-jsbi@^3.1.4:
-  version "3.1.4"
-  resolved "https://registry.yarnpkg.com/jsbi/-/jsbi-3.1.4.tgz#9654dd02207a66a4911b4e4bb74265bc2cbc9dd0"
-  integrity sha512-52QRRFSsi9impURE8ZUbzAMCLjPm4THO7H2fcuIvaaeFTbSysvkodbQQXIVsNgq/ypDbq6dJiuGKL0vZ/i9hUg==
+jsbi@^3.1.6:
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/jsbi/-/jsbi-3.2.1.tgz#513a8f404abb9d5ba725f5265265b688215ee9f0"
+  integrity sha512-NzcT09wuJReIO829enrY3yRdHFz+ciVIq01PCGPkHlwIv5Dj9v2F4daQ4akwuPHf6xO/oii4Jrd3BsPepOxXrg==
 
 jsbn@~0.1.0:
   version "0.1.1"

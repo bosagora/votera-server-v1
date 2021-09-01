@@ -50,8 +50,8 @@ async function getPeriodHeight(period) {
     const startDate = confirmDateOnly(period.begin) + getVoteBeginOffset();
     const endDate = confirmDateOnly(period.end) + getVoteEndOffset();
 
-    const start_height = await strapi.services.boaclient.getHeightAt(new Date(startDate));
-    const end_height = (await strapi.services.boaclient.getHeightAt(new Date(endDate))) - 1;
+    const start_height = await strapi.services.boaclient.getHeightAt(new Date(startDate)) + 1;
+    const end_height = (await strapi.services.boaclient.getHeightAt(new Date(endDate)));
 
     return { start_height, end_height };
 }
@@ -391,7 +391,7 @@ module.exports = {
             if (proposal.status === 'PENDING_VOTE') {
                 if (!proposal.tx_hash_vote_fee) {
                     const currentBlockHeight = await strapi.services.boaclient.getCurrentBlockHeight();
-                    if (currentBlockHeight >= proposal.vote_start_height) {
+                    if (currentBlockHeight >= (proposal.vote_start_height - 1)) {
                         await strapi.query('proposal').update({ id: proposal.id }, { status: 'CANCEL' });
 
                         return {
@@ -509,6 +509,10 @@ module.exports = {
     async batchJob() {
         console.log(`batch:proposal batchJob at ${new Date()}`);
 
+        if (!strapi.services.boaclient.isInitialized()) {
+            return;
+        }
+
         const blockHeight = await strapi.services.boaclient.getCurrentBlockHeight();
         const proposals = await strapi
             .query('proposal')
@@ -572,7 +576,7 @@ module.exports = {
                 } else if (proposal.status === 'PENDING_VOTE') {
                     // PENDING_VOTE -> VOTE or CANCEL
                     const alarmHeight = proposal.vote_start_height - strapi.services.boaclient.BLOCKS_PER_DAY;
-                    if (blockHeight < proposal.vote_start_height) {
+                    if (blockHeight < (proposal.vote_start_height - 1)) {
                         if (!proposal.tx_hash_vote_fee || proposal.tx_hash_vote_fee === '') {
                             if (proposal.validators) {
                                 const validators = JSON.parse(proposal.validators);
@@ -615,7 +619,7 @@ module.exports = {
                                     });
                             }
                         }
-                    } else if (blockHeight >= proposal.vote_start_height && blockHeight < proposal.vote_end_height) {
+                    } else if (blockHeight >= (proposal.vote_start_height - 1) && blockHeight < proposal.vote_end_height) {
                         if (!proposal.tx_hash_vote_fee || proposal.tx_hash_vote_fee === '') {
                             if (!proposal.validators) {
                                 // change to cancel because proposer even didn't query vote fee
@@ -666,7 +670,7 @@ module.exports = {
                 } else if (proposal.status === 'VOTE') {
                     // VOTE -> CLOSED
                     const alarmHeight = proposal.vote_end_height - strapi.services.boaclient.BLOCKS_PER_DAY;
-                    if (blockHeight > proposal.vote_end_height) {
+                    if (blockHeight >= proposal.vote_end_height) {
                         await strapi.query('proposal').update({ id: proposal.id }, { status: 'CLOSED' });
                         publishFeedToManager(proposal.id, 'CLOSED');
                     } else if (blockHeight > alarmHeight) {

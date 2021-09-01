@@ -3,6 +3,7 @@ const BOASodium = require('boa-sodium-ts');
 const URI = require('urijs');
 const sb = require('smart-buffer');
 const stringify = require('fast-json-stable-stringify');
+const { estimateVotePeriod } = require('../../proposal/controllers/proposal');
 
 const CHECK_RESULT_NOTFOUND = 0;
 const CHECK_RESULT_FOUND = 1;
@@ -25,6 +26,10 @@ module.exports = {
         await boasdk.SodiumHelper.init()
 
         this.boaClient = new boasdk.BOAClient(stoa_uri.toString(), agora_uri.toString());
+    },
+
+    isInitialized() {
+        return !!this.boaClient;
     },
 
     async getValidVoterCard(voterString) {
@@ -139,7 +144,7 @@ module.exports = {
 
                     tx_hash_proposal_fee = item.tx_hash;
 
-                    if (boasdk.JSBI.greaterThanOrEqual(tx.outputs[find_idx].value, expected_proposal_fee)) {
+                    if (boasdk.JSBI.greaterThanOrEqual(tx.outputs[find_idx].value.value, expected_proposal_fee)) {
                         return { result: CHECK_RESULT_FOUND, tx_hash_proposal_fee };
                     }
 
@@ -181,7 +186,8 @@ module.exports = {
             const public_key = new boasdk.PublicKey(address);
             const vote_cost = boasdk.JSBI.divide(expected_data.vote_fee, boasdk.JSBI.BigInt(validators.length));
 
-            let tx_hash_vote_fee;
+            let result = CHECK_RESULT_NOTFOUND;
+            let tx_hash_vote_fee = '';
             let page = 1;
             let history = await this.boaClient.getWalletTransactionsHistory(public_key, 100, page, ['payload'], query_begin, query_end);
             while (history && history.length > 0) {
@@ -231,10 +237,10 @@ module.exports = {
                         if (find_idx < 0) {
                             break;
                         }
-                        if (boasdk.JSBI.lessThan(tx.outputs[find_idx].value, vote_cost)) {
+                        if (boasdk.JSBI.lessThan(tx.outputs[find_idx].value.value, vote_cost)) {
                             break;
                         }
-                        sum_vote_cost = boasdk.JSBI.add(sum_vote_cost, tx.outputs[find_idx].value);
+                        sum_vote_cost = boasdk.JSBI.add(sum_vote_cost, tx.outputs[find_idx].value.value);
                     }
                     if (v_idx >= 0) {
                         result = CHECK_RESULT_INSUFFICIENT; // found proposal data transaction but vote_fee is smaller or missing
@@ -343,5 +349,13 @@ module.exports = {
             expected_data.proposal_fee_address = new boasdk.PublicKey(proposal.proposal_fee_address);
         }
         return expected_data;
+    },
+
+    async estimatePeriod(start_height, end_height) {
+        const period = {
+            begin: new Date((await this.boaClient.getHeightToTime(boasdk.JSBI.BigInt(start_height))) * 1000),
+            end: new Date((await this.boaClient.getHeightToTime(boasdk.JSBI.BigInt(end_height))) * 1000),
+        };
+        return period;
     }
 };
