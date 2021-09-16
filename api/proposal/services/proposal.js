@@ -647,7 +647,6 @@ module.exports = {
                                             { id: proposal.id },
                                             { tx_hash_vote_fee: txResult.tx_hash_vote_fee, status: 'VOTE' },
                                         );
-                                    publishFeedToManager(proposal.id, 'VOTING');
                                 } else {
                                     strapi.log.error(
                                         { proposal: proposal.proposalId },
@@ -661,7 +660,6 @@ module.exports = {
                         } else {
                             // change to VOTE
                             await strapi.query('proposal').update({ id: proposal.id }, { status: 'VOTE' });
-                            publishFeedToManager(proposal.id, 'VOTING');
                         }
                     } else if (blockHeight >= proposal.vote_end_height) {
                         // change to CANCEL
@@ -672,7 +670,6 @@ module.exports = {
                     const alarmHeight = proposal.vote_end_height - strapi.services.boaclient.BLOCKS_PER_DAY;
                     if (blockHeight >= proposal.vote_end_height) {
                         await strapi.query('proposal').update({ id: proposal.id }, { status: 'CLOSED' });
-                        publishFeedToManager(proposal.id, 'CLOSED');
                     } else if (blockHeight > alarmHeight) {
                         strapi.services.notification.onProposalTimeAlarm(proposal)
                             .catch((err) => {
