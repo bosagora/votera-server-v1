@@ -2923,10 +2923,10 @@ bn@^1.0.5:
   resolved "https://registry.yarnpkg.com/bn/-/bn-1.0.5.tgz#fdf5fdeede044884ea7ee62adff763ee99144fa5"
   integrity sha512-7TvGbqbZb6lDzsBtNz1VkdXXV0BVmZKPPViPmo2IpvwaryF7P+QKYKACyVkwo2mZPr2CpFiz7EtgPEcc3o/JFQ==
 
-boa-sdk-ts@^0.1.5:
-  version "0.1.5"
-  resolved "https://registry.yarnpkg.com/boa-sdk-ts/-/boa-sdk-ts-0.1.5.tgz#d00c2e74dde7ef65a6d92e134d03b375c96c3427"
-  integrity sha512-JBCDgiPhEYqHPngbGqZom3iD2RTBgh84Mfgrc6AI58uKEzgA0DW0TnzNvFt9HNT9Ncg5SsKRgNTjgwd0AesnbA==
+boa-sdk-ts@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/boa-sdk-ts/-/boa-sdk-ts-0.2.1.tgz#36a2c86d0b2a13b89b567f2981ef5d5aa0520d92"
+  integrity sha512-x94fOjXE44mBBHFXcQHCDHQf9UGia30TkawvwzEWbxcdxs8TUblGgz9M4CZ9xpaxJXV9x2lbMGRTt69fUKehHA==
   dependencies:
     "@ctrl/ts-base32" "^1.2.1"
     ajv "^6.12.6"
@@ -2944,10 +2944,10 @@ boa-sodium-base-ts@0.1.0, boa-sodium-base-ts@^0.1.0:
   resolved "https://registry.yarnpkg.com/boa-sodium-base-ts/-/boa-sodium-base-ts-0.1.0.tgz#fb17fb3596467048747f6fa8866eb78eba75dba4"
   integrity sha512-tb3wBAQlkIi4C7qotvNZrCSZBPl+TZYep1Rce/b7UfFDGScqUsZTiJVsC7yJQLPWQ6nqMIdJAMO5nky+QO3FmA==
 
-boa-sodium-ts@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/boa-sodium-ts/-/boa-sodium-ts-0.1.0.tgz#d344892a4dde8cf3f3a8a295f880cf750a9dae0f"
-  integrity sha512-0jwQRIHmUQ6WAz6vjuzKWoyYVU08pO8K+3fYktJcacZ3RZXsmCcBp3CTC9W0r5y+HSa8qvlNOzi0sLS8MPGgcQ==
+boa-sodium-ts@^0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/boa-sodium-ts/-/boa-sodium-ts-0.1.1.tgz#ead3cdb97acf8d8c3297225e9540dae6e36ad56e"
+  integrity sha512-scK0OXUrOa1IY5Yf3trM6f4y0wbnxuLMb1LkSt145g5mQmZD0AakEwz83YCIQHCYfUQfII3aA8Grggjm+3Ygfw==
   dependencies:
     boa-sodium-base-ts "^0.1.0"
     libsodium-wrappers-sumo "^0.7.9"
