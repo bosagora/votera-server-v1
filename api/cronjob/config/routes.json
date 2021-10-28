@@ -1,0 +1,12 @@
+{
+    "routes": [
+        {
+            "method": "PUT",
+            "path": "/cronjob",
+            "handler": "cronjob.update",
+            "config": {
+                "policies": []
+            }
+        }
+    ]
+}
